@@ -6,6 +6,8 @@ BYOK (Bring Your Own Keys) Solana RPC proxy. Users configure their own RPC provi
 
 The core value proposition is centralized RPC provider management with zero deployment overhead — not free-tier arbitrage. The round-robin dispatch is the mechanism; the dashboard is the product.
 
+**Increase rate limit and quality of service with small additional cost** — by aggregating multiple provider keys behind a single endpoint, clients multiply their effective throughput and gain automatic failover when a provider degrades, without managing any infrastructure.
+
 ## Architecture
 
 ```
@@ -41,7 +43,11 @@ User → dashboard.kevred.io
 |---|---|
 | Proxy runtime | Cloudflare Workers (Rust → WASM via `workers-rs`) |
 | State per client | Cloudflare Durable Objects (atomic round-robin counter + provider config) |
-| Dashboard | Next.js (TypeScript) |
+| Dashboard (frontend) | Vite + React (TypeScript) |
+| Auth | Magic link (email OTP, JWT) |
+| API | TypeScript / Express |
+| CF consumer | TypeScript service consuming Cloudflare events/actions (metrics, circuit breaker state) |
+| Metrics | Cloudflare Analytics Engine (per-client request/error/latency data, queried by the API) |
 | Payments | Stripe Checkout + webhooks |
 | Deploy | Wrangler CLI |
 
@@ -51,11 +57,12 @@ In scope:
 - CF Worker: round-robin dispatch across N providers per client
 - Circuit breaker: detect failing providers, exclude temporarily
 - Dashboard: BYOK config UI (add providers, paste API keys)
-- Auth: simple token-based client identification
+- Auth: magic link (email OTP via JWT) + token-based client identification for proxy requests
 
 Out of scope for v1:
 - Monitoring dashboard / metrics visualization
 - Stripe integration
+- Google SSO
 - WebSocket subscription load balancing
 - Helius Sender integration (requires tip in tx — opt-in later)
 - Cron health checks (add after core is stable)
@@ -66,7 +73,7 @@ Out of scope for v1:
 
 **Dispatch-only Worker, no retry loop inside** — the Worker selects provider, forwards, returns signature. Retry loop (poll `getSignatureStatuses` until `lastValidBlockHeight`) stays client-side. CF Workers CPU time limits make internal retry loops unreliable.
 
-**Durable Objects for counters, not KV** — KV is eventually consistent, breaks atomic round-robin. One DO per client holds both the counter and the provider config. Simpler than KV + DO split at v1.
+**Durable Objects for counters, not KV** — KV is eventually consistent: concurrent Workers in different regions can read the same stale counter value and route two requests to the same provider, breaking round-robin correctness. A DO is a single instance with serialized access — all writes are atomic and immediately visible. One DO per client holds both the round-robin counter and the encrypted provider config.
 
 **BYOK model** — each user's API keys are their own. No ToS violation risk (we are not reselling provider access, we are proxying with the user's own credentials). Keys stored encrypted in the DO.
 
