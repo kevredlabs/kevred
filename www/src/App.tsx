@@ -1,7 +1,10 @@
 import { useState } from 'react';
 
+type CodeTab = 'ts' | 'rust' | 'curl';
+
 export default function App() {
   const [copied, setCopied] = useState(false);
+  const [tab, setTab] = useState<CodeTab>('ts');
 
   return (
     <>
@@ -68,7 +71,7 @@ export default function App() {
             <div className="step">
               <div className="step-num">03 / Dispatch</div>
               <h3>Round-robin transparently</h3>
-              <p>Every RPC call — notably <span className="mono">sendTransaction</span> — is routed to the next provider. Failing providers are circuit-broken for 30s and silently excluded.</p>
+              <p>Every RPC call — notably <span className="mono">sendTransaction</span> — is routed to the next provider. Network errors fail over to the next provider in-flight. Repeatedly failing providers are circuit-broken for 30s and silently excluded.</p>
             </div>
           </div>
         </div>
@@ -82,11 +85,19 @@ export default function App() {
 
           <div className="code-block">
             <div className="code-tabs">
-              <div className="code-tab active">TypeScript</div>
-              <div className="code-tab">Rust</div>
-              <div className="code-tab">cURL</div>
+              <div className={`code-tab${tab === 'ts' ? ' active' : ''}`} onClick={() => setTab('ts')}>TypeScript</div>
+              <div className={`code-tab${tab === 'rust' ? ' active' : ''}`} onClick={() => setTab('rust')}>Rust</div>
+              <div className={`code-tab${tab === 'curl' ? ' active' : ''}`} onClick={() => setTab('curl')}>cURL</div>
             </div>
-            <pre className="code-body"><span className="cm">{'// Before — single provider, capped at 50 req/s'}</span>{'\n'}<span className="kw">const</span>{' rpc = '}<span className="fn">createSolanaRpc</span>{'('}<span className="str">"https://api.helius.xyz/v1?api-key=..."</span>{');\n\n'}<span className="cm">{'// After — kevred dispatches across all your providers'}</span>{'\n'}<span className="kw">const</span>{' rpc = '}<span className="fn">createSolanaRpc</span>{'('}<span className="str">"https://rpc.kevred.io/k_3f8a9b2c1d4e6f7a"</span>{');\n\n'}<span className="kw">const</span>{' sig = '}<span className="kw">await</span>{' rpc.'}<span className="fn">sendTransaction</span>{'(tx).'}<span className="fn">send</span>{'();\n'}<span className="cm">{'// ↑ routes to Helius, then QuickNode, then Triton, then loops'}</span></pre>
+            {tab === 'ts' && (
+              <pre className="code-body"><span className="cm">{'// Before — single provider, capped at 50 req/s'}</span>{'\n'}<span className="kw">const</span>{' rpc = '}<span className="fn">createSolanaRpc</span>{'('}<span className="str">"https://api.helius.xyz/v1?api-key=..."</span>{');\n\n'}<span className="cm">{'// After — kevred dispatches across all your providers'}</span>{'\n'}<span className="kw">const</span>{' rpc = '}<span className="fn">createSolanaRpc</span>{'('}<span className="str">"https://rpc.kevred.io/k_3f8a9b2c1d4e6f7a"</span>{');\n\n'}<span className="kw">const</span>{' sig = '}<span className="kw">await</span>{' rpc.'}<span className="fn">sendTransaction</span>{'(tx).'}<span className="fn">send</span>{'();\n'}<span className="cm">{'// ↑ routes to Helius, then QuickNode, then Triton, then loops'}</span></pre>
+            )}
+            {tab === 'rust' && (
+              <pre className="code-body"><span className="cm">{'// Before — single provider, capped at 50 req/s'}</span>{'\n'}<span className="kw">let</span>{' rpc = '}<span className="fn">RpcClient::new</span>{'('}<span className="str">"https://api.helius.xyz/v1?api-key=..."</span>{'.to_string());\n\n'}<span className="cm">{'// After — kevred dispatches across all your providers'}</span>{'\n'}<span className="kw">let</span>{' rpc = '}<span className="fn">RpcClient::new</span>{'('}<span className="str">"https://rpc.kevred.io/k_3f8a9b2c1d4e6f7a"</span>{'.to_string());\n\n'}<span className="kw">let</span>{' sig = rpc.'}<span className="fn">send_transaction</span>{'(&tx).'}<span className="kw">await</span>{'?;\n'}<span className="cm">{'// ↑ routes to Helius, then QuickNode, then Triton, then loops'}</span></pre>
+            )}
+            {tab === 'curl' && (
+              <pre className="code-body"><span className="cm">{'# Before — single provider, capped at 50 req/s'}</span>{'\n'}<span className="fn">curl</span>{' '}<span className="str">"https://api.helius.xyz/v1?api-key=..."</span>{' \\\n  -X POST -H '}<span className="str">"Content-Type: application/json"</span>{' \\\n  -d '}<span className="str">{'\'{"jsonrpc":"2.0","id":1,"method":"sendTransaction","params":[...]}\''}</span>{'\n\n'}<span className="cm">{'# After — kevred dispatches across all your providers'}</span>{'\n'}<span className="fn">curl</span>{' '}<span className="str">"https://rpc.kevred.io/k_3f8a9b2c1d4e6f7a"</span>{' \\\n  -X POST -H '}<span className="str">"Content-Type: application/json"</span>{' \\\n  -d '}<span className="str">{'\'{"jsonrpc":"2.0","id":1,"method":"sendTransaction","params":[...]}\''}</span>{'\n'}<span className="cm">{'# ↑ routes to Helius, then QuickNode, then Triton, then loops'}</span></pre>
+            )}
           </div>
         </div>
       </section>
@@ -105,8 +116,8 @@ export default function App() {
             </div>
             <div className="feature">
               <div className="feature-icon">⊘</div>
-              <h3>Circuit breaker</h3>
-              <p>Three consecutive failures opens the breaker for 30s. Half-open probe restores the provider as soon as it recovers.</p>
+              <h3>Better reliability</h3>
+              <p>Transient network errors fail over to the next provider on the same request — your client sees a single successful response. Providers that keep failing are excluded for 30s, then probed and restored as soon as they recover.</p>
             </div>
             <div className="feature">
               <div className="feature-icon">⚿</div>
@@ -116,7 +127,7 @@ export default function App() {
             <div className="feature">
               <div className="feature-icon">⚡</div>
               <h3>Edge dispatch</h3>
-              <p>Deployed globally on 300+ edge locations. Less than 8ms added latency compared to calling your provider directly.</p>
+              <p>Runs on Cloudflare Workers, deployed globally across 300+ edge locations. Less than 8ms added latency compared to calling your provider directly.</p>
             </div>
           </div>
         </div>
