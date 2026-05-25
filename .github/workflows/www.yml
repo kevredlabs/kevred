@@ -25,7 +25,7 @@ jobs:
       - id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/kevredlabs/kevred-www
+          images: ghcr.io/kevredlabs/www
           tags: |
             type=semver,pattern={{version}}
             type=raw,value=latest

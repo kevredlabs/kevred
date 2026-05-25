@@ -7,6 +7,8 @@ export async function connectDb(): Promise<void> {
 }
 
 export function dbState(): "connected" | "disconnected" | "connecting" | "disconnecting" {
-  const states = ["disconnected", "connected", "connecting", "disconnecting"] as const;
+  const states: Record<number, "disconnected" | "connected" | "connecting" | "disconnecting"> = {
+    0: "disconnected", 1: "connected", 2: "connecting", 3: "disconnecting",
+  };
   return states[mongoose.connection.readyState] ?? "disconnected";
 }
