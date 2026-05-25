@@ -3,7 +3,8 @@ name: app · build & publish image
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - 'app-v*.*.*-prod'
+      - 'app-v*.*.*-develop'
 
 jobs:
   build-push:
@@ -27,8 +28,8 @@ jobs:
         with:
           images: ghcr.io/kevredlabs/kevred-app
           tags: |
-            type=semver,pattern={{version}}
-            type=raw,value=latest
+            type=raw,value=${{ contains(github.ref_name, '-prod') && 'latest' || 'develop' }}
+            type=raw,value=${{ github.ref_name }}
 
       - uses: docker/build-push-action@v6
         with:
@@ -37,6 +38,6 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            VITE_API_URL=${{ secrets.VITE_API_URL }}
+            VITE_API_URL=${{ contains(github.ref_name, '-prod') && vars.VITE_API_URL_PROD || vars.VITE_API_URL_DEVELOP }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
