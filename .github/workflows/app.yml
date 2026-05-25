@@ -38,6 +38,6 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            VITE_API_URL=${{ contains(github.ref_name, '-prod') && vars.VITE_API_URL_PROD || vars.VITE_API_URL_DEVELOP }}
+            VITE_API_URL=${{ contains(github.ref_name, '-prod') && 'https://api.kevred.com' || 'https://api.develop.kevred.com' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
