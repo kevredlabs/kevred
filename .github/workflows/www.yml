@@ -3,8 +3,8 @@ name: www · build & publish image
 on:
   push:
     tags:
-      - 'www-v*-prod'
-      - 'www-v*-develop'
+      - 'www-v*.*.*-prod'
+      - 'www-v*.*.*-develop'
 
 jobs:
   build-push:
