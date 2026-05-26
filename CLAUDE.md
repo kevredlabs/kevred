@@ -44,7 +44,7 @@ Each service has its own tag namespace: `api-v*`, `app-v*`, `www-v*`.
    ```
 2. Determine the next version:
    - If the changes add a new feature → bump **minor** (`1.0.0` → `1.1.0`)
-   - If the changes are a bug fix or small tweak → bump **patch** (`1.0.0` → `1.0.1`)
+   - If the changes is a bug fix → bump **patch** (`1.0.0` → `1.0.1`)
    - If unclear, ask: "Is this a feature (minor) or a fix (patch)?"
 3. Propose the tag: e.g. `www-v1.1.0-develop` — confirm before pushing.
 4. Push the tag:
