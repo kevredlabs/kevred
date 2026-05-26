@@ -1,13 +1,13 @@
 # kevred-app
 
-React / TypeScript dashboard (frontend). Communicates with `kevred-api` via `VITE_API_URL`.
+React / TypeScript dashboard (frontend). Communicates with `kevred-api` via `VITE_API_URL`. Handles authentication via magic link.
 
 ## Stack
 
 | Layer | Choice |
 |---|---|
 | Runtime | Node.js 24 (build only) |
-| Framework | React 19 |
+| Framework | React 19 + React Router 7 |
 | Bundler | Vite 6 |
 | Language | TypeScript 5 |
 | Serve | nginx (production image) |
@@ -29,13 +29,21 @@ By default, `VITE_API_URL` falls back to `http://localhost:3000` (see [`src/api.
 | `yarn build` | Type-check + production build to `dist/` |
 | `yarn preview` | Serve the `dist/` build locally |
 
+## Routes
+
+| Path | Description |
+|---|---|
+| `/` | Dashboard (authenticated) |
+| `/login` | Magic link request form |
+| `/auth/verify` | Magic link callback — verifies token, sets JWT cookie, redirects to `/` |
+
 ## Environment variables
 
 | Variable | Required | Description |
 |---|---|---|
 | `VITE_API_URL` | No (default `http://localhost:3000`) | Base URL of `kevred-api` |
 
-This variable is baked into the bundle at build time by Vite. It **must** be set at `docker build` time, not at container runtime.
+All variables are baked into the bundle at build time by Vite. They **must** be set at `docker build` time, not at container runtime.
 
 ## Docker
 
