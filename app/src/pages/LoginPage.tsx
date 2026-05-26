@@ -26,13 +26,11 @@ export default function LoginPage() {
     <div className="login-root">
       <div className="card">
         <div className="logo">
-          <img src="/logo_kevred_pixel.svg" className="logo-mark" alt="" />
-          kevred
+          <img src="/logo_kevred_pixel.svg" className="logo-mark" alt="kevred" />
         </div>
 
         {status === "sent" ? (
           <>
-            <div className="verify-icon">📬</div>
             <h1>Check your inbox</h1>
             <p className="sub">
               We sent a link to <strong>{email}</strong>. Click it to sign in.

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { verifyMagicLink } from "../api";
 import "../login.css";
@@ -10,8 +10,12 @@ export default function VerifyPage() {
   const navigate = useNavigate();
   const [status, setStatus] = useState<Status>("verifying");
   const [error, setError] = useState<string | null>(null);
+  const called = useRef(false);
 
   useEffect(() => {
+    if (called.current) return;
+    called.current = true;
+
     const token = searchParams.get("token");
     if (!token) {
       setError("Missing token.");
@@ -34,8 +38,7 @@ export default function VerifyPage() {
     <div className="login-root">
       <div className="card">
         <div className="logo">
-          <img src="/logo_kevred_pixel.svg" className="logo-mark" alt="" />
-          kevred
+          <img src="/logo_kevred_pixel.svg" className="logo-mark" alt="kevred" />
         </div>
 
         {status === "verifying" && (
@@ -47,8 +50,7 @@ export default function VerifyPage() {
 
         {status === "success" && (
           <>
-            <div className="verify-icon">✓</div>
-            <h1>Signed in</h1>
+            <div className="verify-icon" style={{ color: "#22c55e" }}>✓</div>
             <p className="sub">Redirecting…</p>
           </>
         )}

@@ -21,7 +21,8 @@ export default function App() {
             <a href="#features">Features</a>
             <a href="#pricing">Pricing</a>
             <a href="#docs">Docs</a>
-            <a href={`${APP_URL}/login`} className="btn btn-primary">Log in</a>
+            <a href={`${APP_URL}/login`} className="btn">Log in</a>
+            <a href={`${APP_URL}/login`} className="btn btn-primary">Get started →</a>
           </div>
         </div>
       </nav>
