@@ -28,3 +28,29 @@ Always use `yarn`. Never use `npm install`, `npm run`, or any other npm commands
 ## README
 
 Update the relevant README(s) in each PR if the change affects setup, configuration, environment variables, or exposed endpoints.
+
+## Releasing (pushing a tag to trigger CI)
+
+Each service has its own tag namespace: `api-v*`, `app-v*`, `www-v*`.
+
+- `app` and `www` require an environment suffix: `-develop` or `-prod`
+- `api` has a single environment — no suffix
+
+**Process when the user asks to push a tag:**
+
+1. Fetch the latest tags for the relevant service:
+   ```bash
+   git tag --list '<service>-v*' --sort=-version:refname | head -5
+   ```
+2. Determine the next version:
+   - If the changes add a new feature → bump **minor** (`1.0.0` → `1.1.0`)
+   - If the changes are a bug fix or small tweak → bump **patch** (`1.0.0` → `1.0.1`)
+   - If unclear, ask: "Is this a feature (minor) or a fix (patch)?"
+3. Propose the tag: e.g. `www-v1.1.0-develop` — confirm before pushing.
+4. Push the tag:
+   ```bash
+   git tag www-v1.1.0-develop
+   git push origin www-v1.1.0-develop
+   ```
+
+Never push a `-prod` tag without explicit confirmation from the user.
