@@ -13,3 +13,27 @@ export async function fetchHealth(): Promise<HealthResponse> {
   }
   return res.json();
 }
+
+export async function requestMagicLink(email: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/auth/magic-link`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ email }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as { error?: string }).error ?? "Request failed");
+  }
+}
+
+export async function verifyMagicLink(token: string): Promise<void> {
+  const res = await fetch(
+    `${API_BASE}/auth/verify?token=${encodeURIComponent(token)}`,
+    { credentials: "include" }
+  );
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as { error?: string }).error ?? "Verification failed");
+  }
+}
