@@ -37,3 +37,12 @@ export async function verifyMagicLink(token: string): Promise<void> {
     throw new Error((body as { error?: string }).error ?? "Verification failed");
   }
 }
+
+export type MeResponse = { userId: string; email: string };
+
+export async function fetchMe(): Promise<MeResponse> {
+  const res = await fetch(`${API_BASE}/auth/me`, { credentials: "include" });
+  if (!res.ok) throw new Error("Unauthorized");
+  const body = await res.json() as { user: MeResponse };
+  return body.user;
+}
