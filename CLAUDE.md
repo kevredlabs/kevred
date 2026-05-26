@@ -8,10 +8,11 @@
 2. If no issue exists, ask: "There's no issue for this — should I create one?" Never start coding without a reference issue.
 3. Create a branch: `git checkout -b feat/short-name`
 4. Code the task.
-5. Commit using conventional commits: `feat: description`
-6. Push: `git push origin feat/short-name`
-7. Open a PR: `gh pr create --title "..." --body "Closes #XX"`
-8. Announce the PR is ready for review.
+5. **Before committing: show the diff and ask the user to review before proceeding.** Never commit without explicit approval.
+6. Commit using conventional commits: `feat: description`
+7. Push: `git push origin feat/short-name`
+8. Open a PR: `gh pr create --title "..." --body "Closes #XX"`
+9. Announce the PR is ready for review.
 
 Never merge PRs. Merging is done by a human after review.
 
