@@ -1,13 +1,19 @@
 import { useState } from "react";
+import { Navigate } from "react-router-dom";
 import { requestMagicLink } from "../api";
+import { useAuth } from "../auth";
 import "../login.css";
 
 type Status = "idle" | "loading" | "sent" | "error";
 
 export default function LoginPage() {
+  const { user, loading } = useAuth();
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);
+
+  if (loading) return null;
+  if (user) return <Navigate to="/dashboard" replace />;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
