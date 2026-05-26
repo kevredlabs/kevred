@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { verifyMagicLink } from "../api";
 import "../login.css";
 
@@ -7,7 +7,6 @@ type Status = "verifying" | "success" | "error";
 
 export default function VerifyPage() {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const [status, setStatus] = useState<Status>("verifying");
   const [error, setError] = useState<string | null>(null);
   const called = useRef(false);
@@ -26,7 +25,7 @@ export default function VerifyPage() {
     verifyMagicLink(token)
       .then(() => {
         setStatus("success");
-        setTimeout(() => navigate("/"), 1000);
+        setTimeout(() => { window.location.replace("/dashboard"); }, 1000);
       })
       .catch((err) => {
         setError(err instanceof Error ? err.message : "Verification failed");
