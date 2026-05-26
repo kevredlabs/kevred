@@ -3,6 +3,8 @@ WORKDIR /app
 COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile
 COPY . .
+ARG VITE_APP_URL
+ENV VITE_APP_URL=$VITE_APP_URL
 RUN yarn build
 
 FROM nginx:alpine

@@ -3,7 +3,8 @@ name: www · build & publish image
 on:
   push:
     tags:
-      - 'www-v*.*.*'
+      - 'www-v*.*.*-prod'
+      - 'www-v*.*.*-develop'
 
 jobs:
   build-push:
@@ -27,7 +28,7 @@ jobs:
         with:
           images: ghcr.io/kevredlabs/kevred-www
           tags: |
-            type=raw,value=latest
+            type=raw,value=${{ contains(github.ref_name, '-prod') && 'latest' || 'develop' }}
             type=raw,value=${{ github.ref_name }}
 
       - uses: docker/build-push-action@v6
@@ -36,5 +37,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VITE_APP_URL=${{ contains(github.ref_name, '-prod') && 'https://app.kevred.io' || 'https://app.develop.kevred.io' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
