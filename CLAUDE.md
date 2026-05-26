@@ -20,3 +20,11 @@ Never merge PRs. Merging is done by a human after review.
 - Conventional commits format: `feat:`, `fix:`, `chore:`, `docs:`, `test:`
 - Lowercase, imperative mood, max 72 characters (e.g. "feat: add X", "fix: Y").
 - One commit per logical change. In English.
+
+## Package manager
+
+Always use `yarn`. Never use `npm install`, `npm run`, or any other npm commands.
+
+## README
+
+Update the relevant README(s) in each PR if the change affects setup, configuration, environment variables, or exposed endpoints.
