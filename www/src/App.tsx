@@ -1,5 +1,7 @@
 import { useState } from 'react';
 
+const APP_URL = import.meta.env.VITE_APP_URL ?? 'http://localhost:5173';
+
 type CodeTab = 'ts' | 'rust' | 'curl';
 
 export default function App() {
@@ -19,7 +21,7 @@ export default function App() {
             <a href="#features">Features</a>
             <a href="#pricing">Pricing</a>
             <a href="#docs">Docs</a>
-            <a href="login.html" className="btn btn-primary">Log in</a>
+            <a href={`${APP_URL}/login`} className="btn btn-primary">Log in</a>
           </div>
         </div>
       </nav>
@@ -32,7 +34,7 @@ export default function App() {
             Bring your own keys. We dispatch <strong>every RPC call</strong> across Helius, QuickNode, Triton and more — multiplying your effective rate limit, with automatic provider exclusion when one degrades.
           </p>
           <div className="hero-cta">
-            <a href="login.html" className="btn btn-primary">Start free →</a>
+            <a href={`${APP_URL}/login`} className="btn btn-primary">Start free →</a>
             <a href="#docs" className="btn">Read the docs</a>
           </div>
 
@@ -222,7 +224,7 @@ export default function App() {
                 <li>Circuit breaker (default config)</li>
                 <li>Community support</li>
               </ul>
-              <a href="login.html" className="btn price-cta">Start free</a>
+              <a href={`${APP_URL}/login`} className="btn price-cta">Start free</a>
             </div>
 
             <div className="price-card featured">
@@ -236,7 +238,7 @@ export default function App() {
                 <li>Per-provider metrics & alerts</li>
                 <li>Priority support</li>
               </ul>
-              <a href="login.html" className="btn btn-primary price-cta">Upgrade to Pro</a>
+              <a href={`${APP_URL}/login`} className="btn btn-primary price-cta">Upgrade to Pro</a>
             </div>
 
             <div className="price-card">
@@ -259,7 +261,7 @@ export default function App() {
           <h2>Multiply your throughput in 60 seconds.</h2>
           <p>Paste your provider keys. Get one URL. Ship.</p>
           <div className="hero-cta">
-            <a href="login.html" className="btn btn-primary">Get started →</a>
+            <a href={`${APP_URL}/login`} className="btn btn-primary">Get started →</a>
             <a href="#docs" className="btn">Read the docs</a>
           </div>
         </div>
