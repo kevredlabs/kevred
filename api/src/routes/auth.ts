@@ -88,7 +88,7 @@ router.get("/auth/verify", verifyLimiter, async (req: Request, res: Response) =>
 });
 
 router.post("/auth/logout", (_req: Request, res: Response) => {
-  res.clearCookie("token").json({ ok: true });
+  res.clearCookie("token", COOKIE_OPTIONS).json({ ok: true });
 });
 
 router.get("/auth/me", requireAuth, (req: AuthRequest, res: Response) => {
