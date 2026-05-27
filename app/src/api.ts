@@ -46,3 +46,7 @@ export async function fetchMe(): Promise<MeResponse> {
   const body = await res.json() as { user: MeResponse };
   return body.user;
 }
+
+export async function logout(): Promise<void> {
+  await fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include" });
+}

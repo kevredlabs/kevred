@@ -2,7 +2,7 @@ import { useAuth } from "../auth";
 import "../dashboard.css";
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   return (
     <>
@@ -14,7 +14,7 @@ export default function DashboardPage() {
           </div>
           <div className="user-menu">
             <span>{user?.email}</span>
-            <button className="icon-btn">Log out</button>
+            <button className="icon-btn" onClick={logout}>Log out</button>
           </div>
         </div>
       </nav>
