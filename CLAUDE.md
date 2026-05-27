@@ -55,3 +55,16 @@ Each service has its own tag namespace: `api-v*`, `app-v*`, `www-v*`.
    ```
 
 Never push a `-prod` tag without explicit confirmation from the user.
+
+## Browser automation
+
+`agent-browser` is installed globally (https://github.com/vercel-labs/agent-browser).
+
+Use it whenever the user asks to verify, test, or inspect the frontend — navigating pages, submitting forms, checking redirects, reading cookies, taking screenshots. Prefer `snapshot` to understand the page structure, `eval` for session/cookie inspection, and `screenshot` as evidence.
+
+```bash
+agent-browser open http://localhost:5173
+agent-browser snapshot
+agent-browser screenshot /tmp/shot.png
+agent-browser eval "(async () => { const r = await fetch('/api/auth/me', {credentials:'include'}); return r.status })()"
+```
