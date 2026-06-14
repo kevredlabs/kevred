@@ -39,6 +39,5 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             VITE_API_URL=${{ contains(github.ref_name, '-prod') && 'https://api.kevred.com' || 'https://api.develop.kevred.com' }}
-            VITE_RPC_DOMAIN=${{ contains(github.ref_name, '-prod') && 'rpc-mainnet.kevred.net' || 'rpc-mainnet.dev.kevred.net' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

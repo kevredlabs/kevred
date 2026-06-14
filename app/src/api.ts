@@ -38,7 +38,7 @@ export async function verifyMagicLink(token: string): Promise<void> {
   }
 }
 
-export type MeResponse = { userId: string; email: string; customerId: string };
+export type MeResponse = { userId: string; email: string; customerId: string; rpcDomain: string };
 
 export async function fetchMe(): Promise<MeResponse> {
   const res = await fetch(`${API_BASE}/auth/me`, { credentials: "include" });
