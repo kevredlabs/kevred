@@ -2,55 +2,37 @@
 
 ## Project overview
 
-BYOK (Bring Your Own Keys) Solana RPC proxy. Users configure their own RPC provider API keys via a dashboard; the proxy dispatches their `sendTransaction` requests across those providers using round-robin, multiplying their effective rate limit at zero marginal cost.
+BYOK (Bring Your Own Keys) Solana RPC proxy. Users configure their own RPC provider API keys via a dashboard in a prioritized order; the proxy forwards every request to the highest-priority healthy provider, failing over to the next one automatically when a provider goes down.
 
-The core value proposition is centralized RPC provider management with zero deployment overhead — not free-tier arbitrage. The round-robin dispatch is the mechanism; the dashboard is the product.
+The core value proposition is centralized RPC provider management with zero deployment overhead. The priority-based failover is the V1 mechanism; the dashboard is the product.
 
-**Increase rate limit and quality of service with small additional cost** — by aggregating multiple provider keys behind a single endpoint, clients multiply their effective throughput and gain automatic failover when a provider degrades, without managing any infrastructure.
+**Increase reliability and quality of service** — by chaining multiple provider keys behind a single endpoint, clients get automatic failover when a provider degrades, without managing any infrastructure.
 
 ## Architecture
 
 ```
 Client app
     │
-    └── POST https://rpc.kevred.io/{client-token}
+    └── POST https://{clientId}.rpc-mainnet.kevred.net
               │
-         CF Worker (Rust/WASM)
+         CF Worker (TypeScript)
               │
-              ├── Durable Object (per client)
-              │     └── atomic counter → provider index
+              ├── read customer config ────────────► Cloudflare KV
+              │     └── ordered list of provider endpoint URLs
               │
-              ├── forward to providers[idx] with client's API key
-              │     ├── Helius
-              │     ├── QuickNode
-              │     └── Triton / others
+              ├── forward to first responding provider
+              │     ├── Provider 1  ✓ → return response
+              │     ├── Provider 2  ✓ → return response (if 1 returned 429/5xx)
+              │     └── Provider 3  ✓ → return response (if 1+2 failed)
               │
-              └── circuit breaker per provider
-                    ├── transient error (timeout, 5xx, 429) → fail over to next provider in-flight
-                    └── 3 consecutive failures → excluded 30s → recovering probe → healthy
+              └── write analytics event ───────────► Cloudflare Analytics Engine
+                    (customerId, endpoint used, status, latency)
 ```
 
-**Circuit breaker timeline (example)**
-
-Helius goes down for ~2 minutes, with two other providers (QuickNode, Triton) in the rotation:
-
-| t | Event | Helius state |
-|---|---|---|
-| 0s | all good | healthy |
-| 10s | req #1 → timeout (1/3) | healthy |
-| 11s | req #2 → 502 (2/3) | healthy |
-| 12s | req #3 → timeout (3/3) | **excluded** |
-| 12–42s | no requests sent to Helius, rotation continues on QuickNode/Triton | excluded |
-| 42s | 30s elapsed → 1 probe sent | recovering |
-| 42s | probe → still timeout | **excluded** (another 30s) |
-| 72s | new probe → 200 OK | **healthy**, rotation resumes |
-
-Note: from t=10s to t=12s, per-request failover already routed those three failing requests to the next provider — clients saw three successful responses. The breaker counter incremented in parallel and excluded Helius at the third strike to stop wasting 1/N of future traffic on it.
-
-**Dashboard (Next.js)**
+**Dashboard**
 ```
 User → dashboard.kevred.io
-    ├── add/remove RPC providers + API keys (stored encrypted in DO/KV)
+    ├── add/remove RPC providers + API keys (stored in KV)
     ├── view per-provider metrics (request count, error rate, latency)
     └── manage subscription (Stripe)
 ```
@@ -59,72 +41,65 @@ User → dashboard.kevred.io
 
 | Layer | Choice |
 |---|---|
-| Proxy runtime | Cloudflare Workers (Rust → WASM via `workers-rs`) |
-| State per client | Cloudflare Durable Objects (atomic round-robin counter + provider config) |
+| Proxy runtime | Cloudflare Workers (TypeScript) |
+| Config per client | Cloudflare KV (ordered provider endpoint list) |
 | Dashboard (frontend) | Vite + React (TypeScript) |
 | Auth | Magic link (email OTP, JWT) |
 | API | TypeScript / Express |
-| CF consumer | TypeScript service consuming Cloudflare events/actions (metrics, circuit breaker state) |
-| Metrics | Cloudflare Analytics Engine (per-client request/error/latency data, queried by the API) |
+| Metrics | Cloudflare Analytics Engine (per-client request/endpoint/latency data, queried by the API) |
 | Payments | Stripe Checkout + webhooks |
 | Deploy | Wrangler CLI |
 
 ## V1 scope
 
 In scope:
-- CF Worker: round-robin dispatch across N providers per client
-- Circuit breaker: per-request failover on transient errors (timeout, 5xx, 429, conn refused) + N-failure provider exclusion for 30s. Retry caps at N-1 providers and is NOT triggered on RPC-level errors (invalid params, `BlockhashNotFound`, etc.) to avoid amplifying client mistakes.
-- Dashboard: BYOK config UI (add providers, paste API keys) + per-provider metrics (request count, error rate, latency, breaker state)
-- Auth: magic link (email OTP via JWT) + token-based client identification for proxy requests
+- CF Worker: priority-based failover across N providers per client — on 429/5xx, falls through to next provider in-flight
+- Dashboard: BYOK config UI (add providers in priority order, paste API keys) + per-provider metrics (request count, error rate, latency)
+- Auth: magic link (email OTP via JWT) + subdomain-based client identification for proxy requests
 
 Out of scope for v1:
+- Circuit breaker (N-failure exclusion, recovery probes)
+- Round-robin dispatch (throughput scaling across providers)
 - Stripe integration
 - Google SSO
 - WebSocket subscription load balancing
-- Helius Sender integration (requires tip in tx — opt-in later)
-- Cron health checks (add after core is stable)
 
 ## Key architectural decisions
 
-**Round-robin, not scatter** — each tx goes to one provider, rotating. Scatter (send same tx to all providers) solves redundancy per tx, not throughput. We want throughput.
+**Priority failover, not round-robin** — every request goes to provider #1; on 429/5xx the Worker falls through to provider #2, then #3, inline without a retry loop. Round-robin (rotating across all providers for throughput) is deferred to V2.
 
-**Dispatch-only Worker, no retry loop inside** — the Worker selects provider, forwards, returns signature. Retry loop (poll `getSignatureStatuses` until `lastValidBlockHeight`) stays client-side. CF Workers CPU time limits make internal retry loops unreliable.
+**Stateless Worker, config in KV** — no state in the Worker itself. Customer config (ordered endpoint list) is read from KV on each request. KV eventual consistency is acceptable here because the config changes rarely and a briefly stale read has no correctness impact — worst case a request hits a stale endpoint and falls over to the next.
 
-**Durable Objects for counters, not KV** — KV is eventually consistent: concurrent Workers in different regions can read the same stale counter value and route two requests to the same provider, breaking round-robin correctness. A DO is a single instance with serialized access — all writes are atomic and immediately visible. One DO per client holds both the round-robin counter and the encrypted provider config.
+**Dispatch-only Worker, no retry loop inside** — the Worker selects provider, forwards, returns response. Retry loop (poll `getSignatureStatuses` until `lastValidBlockHeight`) stays client-side. CF Workers CPU time limits make internal retry loops unreliable.
 
-**BYOK model** — each user's API keys are their own. No ToS violation risk (we are not reselling provider access, we are proxying with the user's own credentials). Keys stored encrypted in the DO.
-
-**Approximate state is acceptable** — CF Workers may spawn multiple V8 isolates; the DO is the source of truth for the counter. The Worker routes to the DO on every request. No state in the Worker itself.
+**BYOK model** — each user's API keys are their own. No ToS violation risk (we are not reselling provider access, we are proxying with the user's own credentials).
 
 ## Long-term roadmap
 
+- **Circuit breaker (V2)**: track consecutive failures per provider; after N strikes exclude the provider for 30s, probe to recover. Requires Durable Objects (KV is eventually consistent — two Workers could read stale state and route to an excluded provider).
+- **Round-robin dispatch (V3)**: rotate across all healthy providers to multiply effective throughput when a single provider's rate limit becomes the bottleneck.
 - **Validator integration**: Kevredlabs operates a Solana validator. Route to own validator as primary provider long-term → eliminates dependency on third-party free tiers entirely and any ToS risk.
-- **Helius Sender**: integrate as opt-in provider for tipped transactions (dual routing, 0 credits).
 - **Stripe**: subscription plans gating number of providers, request volume, circuit breaker config.
 
 ## Development setup
 
 ```bash
-# Worker (Rust)
-cargo install worker-build
-wrangler dev   # local dev with DO/KV simulation
+# Worker
+cd cloudflare-rpc
+yarn install
+yarn wrangler dev --env dev
 
-# Dashboard (Next.js)
-cd dashboard
-npm install
-npm run dev
-
-# Deploy Worker
-wrangler secret put ENCRYPTION_KEY
-wrangler deploy
+# Deploy
+yarn wrangler deploy --env dev
+yarn wrangler deploy --env prod
 
 # Tail production logs
-wrangler tail
+yarn wrangler tail --env prod
 ```
 
 ## Team
 
 - **Leo** — Solana backend, Worker implementation, provider integrations
-- **Yves-Marie** — systems architecture, infrastructure, DO state design, reliability
+- **Yves-Marie** — systems architecture, infrastructure, reliability
 
 Both at Kevredlabs (Solana R&D lab, 2-person team).
