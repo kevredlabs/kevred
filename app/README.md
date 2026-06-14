@@ -42,6 +42,7 @@ By default, `VITE_API_URL` falls back to `http://localhost:3000` (see [`src/api.
 | Variable | Required | Description |
 |---|---|---|
 | `VITE_API_URL` | No (default `http://localhost:3000`) | Base URL of `kevred-api` |
+| `VITE_RPC_DOMAIN` | No (default `rpc-mainnet.dev.kevred.net`) | Domain suffix for the displayed customer RPC endpoint — final URL is `{customerId}.{VITE_RPC_DOMAIN}` |
 
 All variables are baked into the bundle at build time by Vite. They **must** be set at `docker build` time, not at container runtime.
 
@@ -50,6 +51,7 @@ All variables are baked into the bundle at build time by Vite. They **must** be 
 ```bash
 docker build \
   --build-arg VITE_API_URL=https://api.kevred.com \
+  --build-arg VITE_RPC_DOMAIN=rpc-mainnet.kevred.net \
   -t kevred-app .
 docker run -p 80:80 kevred-app
 ```
@@ -75,10 +77,10 @@ git push origin app-v1.2.3-prod
 
 **Two environments, one workflow — tag suffix controls everything:**
 
-| Tag suffix | `VITE_API_URL` baked in | Docker tags pushed |
-|---|---|---|
-| `-develop` | `https://api.develop.kevred.com` | `develop`, `app-v1.2.3-develop` |
-| `-prod` | `https://api.kevred.com` | `latest`, `app-v1.2.3-prod` |
+| Tag suffix | `VITE_API_URL` baked in | `VITE_RPC_DOMAIN` baked in | Docker tags pushed |
+|---|---|---|---|
+| `-develop` | `https://api.develop.kevred.com` | `rpc-mainnet.dev.kevred.net` | `develop`, `app-v1.2.3-develop` |
+| `-prod` | `https://api.kevred.com` | `rpc-mainnet.kevred.net` | `latest`, `app-v1.2.3-prod` |
 
 **Steps:**
 
