@@ -101,7 +101,15 @@ router.get("/auth/me", requireAuth, async (req: AuthRequest, res: Response) => {
     res.status(404).json({ error: "User not found" });
     return;
   }
-  res.json({ user: { userId: user._id.toString(), email: user.email, customerId: user.customerId } });
+  const rpcDomain = process.env.RPC_DOMAIN ?? "rpc-mainnet.dev.kevred.net";
+  res.json({
+    user: {
+      userId: user._id.toString(),
+      email: user.email,
+      customerId: user.customerId,
+      rpcDomain,
+    },
+  });
 });
 
 export default router;

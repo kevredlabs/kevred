@@ -3,8 +3,6 @@ import { useAuth } from "../auth";
 import { fetchProviders, putProviders, type Provider } from "../api";
 import "../dashboard.css";
 
-const RPC_DOMAIN = import.meta.env.VITE_RPC_DOMAIN ?? "rpc-mainnet.dev.kevred.net";
-
 export default function DashboardPage() {
   const { user, logout } = useAuth();
   const [providers, setProviders] = useState<Provider[]>([]);
@@ -16,7 +14,9 @@ export default function DashboardPage() {
   const [draftLabel, setDraftLabel] = useState("");
   const [draftUrl, setDraftUrl] = useState("");
 
-  const endpointUrl = user?.customerId ? `https://${user.customerId}.${RPC_DOMAIN}` : "";
+  const endpointUrl = user?.customerId && user?.rpcDomain
+    ? `https://${user.customerId}.${user.rpcDomain}`
+    : "";
 
   useEffect(() => {
     fetchProviders()

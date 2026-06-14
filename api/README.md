@@ -52,13 +52,14 @@ gcloud compute ssh app --tunnel-through-iap -- -L 27017:localhost:27017 -N
 | `CF_ACCOUNT_ID` | Yes | Cloudflare account id — same value across envs |
 | `CF_KV_NAMESPACE_ID` | Yes | Cloudflare KV namespace id — **different per env** (see below) |
 | `CF_API_TOKEN` | Yes | Cloudflare API token with `Workers KV Storage: Edit` permission |
+| `RPC_DOMAIN` | No (default `rpc-mainnet.dev.kevred.net`) | Domain suffix returned by `/auth/me` so the dashboard can display the user's endpoint as `{customerId}.{RPC_DOMAIN}` — **different per env** (see below) |
 
 Two databases and two Cloudflare KV namespaces are in use — one per environment. The API must point at the namespace matching its environment, otherwise the dev API would write into the prod proxy's config (and vice versa).
 
-| Environment | MongoDB database | Cloudflare KV namespace | Worker route |
-|---|---|---|---|
-| develop | `kevred-develop` | dev KV namespace (see [`cloudflare-rpc/wrangler.toml`](https://github.com/kevredlabs/cloudflare-rpc/blob/main/wrangler.toml) `env.dev`) | `*.rpc-mainnet.dev.kevred.net` |
-| prod | `kevred-prod` | prod KV namespace (see [`cloudflare-rpc/wrangler.toml`](https://github.com/kevredlabs/cloudflare-rpc/blob/main/wrangler.toml) `env.prod`) | `*.rpc-mainnet.kevred.net` |
+| Environment | MongoDB database | Cloudflare KV namespace | `RPC_DOMAIN` | Worker route |
+|---|---|---|---|---|
+| develop | `kevred-develop` | dev KV namespace (see [`cloudflare-rpc/wrangler.toml`](https://github.com/kevredlabs/cloudflare-rpc/blob/main/wrangler.toml) `env.dev`) | `rpc-mainnet.dev.kevred.net` | `*.rpc-mainnet.dev.kevred.net` |
+| prod | `kevred-prod` | prod KV namespace (see [`cloudflare-rpc/wrangler.toml`](https://github.com/kevredlabs/cloudflare-rpc/blob/main/wrangler.toml) `env.prod`) | `rpc-mainnet.kevred.net` | `*.rpc-mainnet.kevred.net` |
 
 ## Endpoints
 
