@@ -3,6 +3,7 @@ import rateLimit from "express-rate-limit";
 import { generateToken, hashToken } from "../lib/token";
 import { signJwt } from "../lib/jwt";
 import { sendMagicLink } from "../lib/mailer";
+import { generateCustomerId } from "../lib/customerId";
 import { MagicToken } from "../models/MagicToken";
 import { User } from "../models/User";
 import { requireAuth, AuthRequest } from "../middleware/auth";
@@ -79,7 +80,10 @@ router.get("/auth/verify", verifyLimiter, async (req: Request, res: Response) =>
 
   let user = await User.findOne({ email: magicToken.email });
   if (!user) {
-    user = await User.create({ email: magicToken.email });
+    user = await User.create({ email: magicToken.email, customerId: generateCustomerId() });
+  } else if (!user.customerId) {
+    user.customerId = generateCustomerId();
+    await user.save();
   }
 
   const jwt = signJwt({ userId: user._id.toString(), email: user.email });
@@ -91,8 +95,13 @@ router.post("/auth/logout", (_req: Request, res: Response) => {
   res.clearCookie("token", COOKIE_OPTIONS).json({ ok: true });
 });
 
-router.get("/auth/me", requireAuth, (req: AuthRequest, res: Response) => {
-  res.json({ user: req.user });
+router.get("/auth/me", requireAuth, async (req: AuthRequest, res: Response) => {
+  const user = await User.findById(req.user!.userId).select("email customerId");
+  if (!user) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+  res.json({ user: { userId: user._id.toString(), email: user.email, customerId: user.customerId } });
 });
 
 export default router;

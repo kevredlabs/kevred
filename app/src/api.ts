@@ -38,7 +38,7 @@ export async function verifyMagicLink(token: string): Promise<void> {
   }
 }
 
-export type MeResponse = { userId: string; email: string };
+export type MeResponse = { userId: string; email: string; customerId: string };
 
 export async function fetchMe(): Promise<MeResponse> {
   const res = await fetch(`${API_BASE}/auth/me`, { credentials: "include" });
@@ -49,4 +49,27 @@ export async function fetchMe(): Promise<MeResponse> {
 
 export async function logout(): Promise<void> {
   await fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include" });
+}
+
+export type Provider = { label: string; url: string };
+export type ProvidersResponse = { customerId: string; providers: Provider[] };
+
+export async function fetchProviders(): Promise<ProvidersResponse> {
+  const res = await fetch(`${API_BASE}/providers`, { credentials: "include" });
+  if (!res.ok) throw new Error("Failed to load providers");
+  return res.json();
+}
+
+export async function putProviders(providers: Provider[]): Promise<ProvidersResponse> {
+  const res = await fetch(`${API_BASE}/providers`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ providers }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as { error?: string }).error ?? "Failed to save providers");
+  }
+  return res.json();
 }
