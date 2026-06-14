@@ -49,13 +49,16 @@ gcloud compute ssh app --tunnel-through-iap -- -L 27017:localhost:27017 -N
 | `MAILJET_SECRET_KEY` | Yes | Mailjet secret key |
 | `MAIL_FROM_EMAIL` | Yes | Sender email address |
 | `MAIL_FROM_NAME` | No (default `Kevred`) | Sender display name |
+| `CF_ACCOUNT_ID` | Yes | Cloudflare account id — same value across envs |
+| `CF_KV_NAMESPACE_ID` | Yes | Cloudflare KV namespace id — **different per env** (see below) |
+| `CF_API_TOKEN` | Yes | Cloudflare API token with `Workers KV Storage: Edit` permission |
 
-Two databases are in use — one per environment:
+Two databases and two Cloudflare KV namespaces are in use — one per environment. The API must point at the namespace matching its environment, otherwise the dev API would write into the prod proxy's config (and vice versa).
 
-| Environment | Database |
-|---|---|
-| develop | `kevred-develop` |
-| prod | `kevred-prod` |
+| Environment | MongoDB database | Cloudflare KV namespace | Worker route |
+|---|---|---|---|
+| develop | `kevred-develop` | dev KV namespace (see [`cloudflare-rpc/wrangler.toml`](https://github.com/kevredlabs/cloudflare-rpc/blob/main/wrangler.toml) `env.dev`) | `*.rpc-mainnet.dev.kevred.net` |
+| prod | `kevred-prod` | prod KV namespace (see [`cloudflare-rpc/wrangler.toml`](https://github.com/kevredlabs/cloudflare-rpc/blob/main/wrangler.toml) `env.prod`) | `*.rpc-mainnet.kevred.net` |
 
 ## Endpoints
 
@@ -66,9 +69,22 @@ Two databases are in use — one per environment:
 | `POST` | `/auth/magic-link` | No | Send a magic link to the given email (rate limited: 5 req / 15 min) |
 | `GET` | `/auth/verify?token=xxx` | No | Validate the magic link token, set JWT cookie (rate limited: 20 req / 15 min) |
 | `POST` | `/auth/logout` | No | Clear the JWT cookie |
-| `GET` | `/auth/me` | Yes | Return the current user from the JWT |
+| `GET` | `/auth/me` | Yes | Return the current user (`email`, `customerId`) |
 
 The JWT is stored in an `HttpOnly; Secure; SameSite=Strict` cookie named `token`. Clients must send requests with `credentials: "include"`.
+
+### Providers
+
+| Method | Path | Auth required | Description |
+|---|---|---|---|
+| `GET` | `/providers` | Yes | Return the user's ordered provider list and their `customerId` |
+| `PUT` | `/providers` | Yes | Replace the full provider list (add / remove / reorder / edit in one call) |
+
+`PUT /providers` body: `{ "providers": [{ "label": "Helius mainnet", "url": "https://..." }, ...] }`
+
+Validation: max 5 providers, HTTPS only, max 2 kB per URL, max 100 chars per label. Array order = priority (first = highest priority).
+
+On success, the API writes `{ endpoints: [url1, url2, ...] }` to Cloudflare KV under `config:{customerId}` so the `cloudflare-rpc` Worker picks it up immediately. If the KV write fails, the response is `502` and the MongoDB state is intentionally kept — the user can retry.
 
 ### Health
 
