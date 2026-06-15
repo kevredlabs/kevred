@@ -4,9 +4,21 @@ const APP_URL = import.meta.env.VITE_APP_URL ?? 'http://localhost:5173';
 
 type CodeTab = 'ts' | 'rust' | 'curl';
 
+const ENDPOINT_URL = 'https://k_3f8a9b2c1d4e6f7a.rpc-mainnet.dev.kevred.net';
+
 export default function App() {
   const [copied, setCopied] = useState(false);
   const [tab, setTab] = useState<CodeTab>('ts');
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(ENDPOINT_URL);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // clipboard API unavailable (insecure context, older browser) — leave state untouched
+    }
+  };
 
   return (
     <>
@@ -30,9 +42,10 @@ export default function App() {
       <header className="hero">
         <div className="container hero-inner">
           <div className="pill"><span className="pill-dot"></span> Live on Solana mainnet</div>
-          <h1>One endpoint.<br /><span className="accent">Every RPC provider.</span></h1>
+          <h1>Stop choosing your RPC.<br /><span className="accent">Use them all.</span></h1>
           <p className="lead">
-            Bring your own keys. We dispatch <strong>every RPC call</strong> across Helius, QuickNode, Triton and more — multiplying your effective rate limit, with automatic provider exclusion when one degrades.
+            Bring your own keys. We dispatch <strong>every RPC call</strong> across Helius, QuickNode, Triton and more.<br />
+            Pick <strong>sequential</strong> for reliability or <strong>parallel</strong> for speed.
           </p>
           <div className="hero-cta">
             <a href={`${APP_URL}/login`} className="btn btn-primary">Start free →</a>
@@ -45,8 +58,8 @@ export default function App() {
               <div className="endpoint-dots"><span></span><span></span><span></span></div>
             </div>
             <div className="endpoint-url">
-              <span><span className="url">https://rpc-mainnet.kevred.com/</span><span className="token">k_3f8a9b2c1d4e6f7a</span></span>
-              <button className="copy-btn" onClick={() => setCopied(true)}>
+              <span><span className="url">https://</span><span className="token">k_3f8a9b2c1d4e6f7a</span><span className="url">.rpc-mainnet.dev.kevred.net</span></span>
+              <button className="copy-btn" onClick={handleCopy}>
                 {copied ? 'Copied ✓' : 'Copy'}
               </button>
             </div>
@@ -57,24 +70,24 @@ export default function App() {
       <section id="how">
         <div className="container">
           <div className="section-label">How it works</div>
-          <h2>From three API keys to 3× throughput</h2>
-          <p className="section-sub">No infrastructure. No retry loops on your side. Paste your provider keys and point your client at one URL.</p>
+          <h2>Plug your keys. Get one endpoint.</h2>
+          <p className="section-sub">No infrastructure. No custom code. No retry loops on your side. Paste your provider keys and point your client at one URL.</p>
 
           <div className="steps">
             <div className="step">
               <div className="step-num">01 / Configure</div>
               <h3>Add your provider keys</h3>
-              <p>Paste your Helius, QuickNode or Triton API keys. They're encrypted in a per-client Durable Object — never logged, never reused.</p>
+              <p>Paste your Helius, QuickNode or Triton API keys. They're stored securely, never logged, never reused.</p>
             </div>
             <div className="step">
               <div className="step-num">02 / Integrate</div>
               <h3>Swap one URL</h3>
-              <p>Replace your RPC URL with <span className="mono">rpc-mainnet.kevred.com/{'{token}'}</span>. Compatible with any Solana client — web3.js, kit, anchor.</p>
+              <p>Swap your RPC URL. That's it.</p>
             </div>
             <div className="step">
               <div className="step-num">03 / Dispatch</div>
-              <h3>Round-robin transparently</h3>
-              <p>Every RPC call — notably <span className="mono">sendTransaction</span> — is routed to the next provider. Network errors fail over to the next provider in-flight. Repeatedly failing providers are circuit-broken for 30s and silently excluded.</p>
+              <h3>Pick your mode</h3>
+              <p><strong>Sequential</strong> to fail over. <strong>Parallel</strong> to race. We handle the rest and auto-exclude failing providers.</p>
             </div>
           </div>
         </div>
@@ -93,13 +106,13 @@ export default function App() {
               <div className={`code-tab${tab === 'curl' ? ' active' : ''}`} onClick={() => setTab('curl')}>cURL</div>
             </div>
             {tab === 'ts' && (
-              <pre className="code-body"><span className="cm">{'// Before — single provider, capped at 50 req/s'}</span>{'\n'}<span className="kw">const</span>{' rpc = '}<span className="fn">createSolanaRpc</span>{'('}<span className="str">"https://api.helius.xyz/v1?api-key=..."</span>{');\n\n'}<span className="cm">{'// After — kevred dispatches across all your providers'}</span>{'\n'}<span className="kw">const</span>{' rpc = '}<span className="fn">createSolanaRpc</span>{'('}<span className="str">"https://rpc-mainnet.kevred.com/k_3f8a9b2c1d4e6f7a"</span>{');\n\n'}<span className="kw">const</span>{' sig = '}<span className="kw">await</span>{' rpc.'}<span className="fn">sendTransaction</span>{'(tx).'}<span className="fn">send</span>{'();\n'}<span className="cm">{'// ↑ routes to Helius, then QuickNode, then Triton, then loops'}</span></pre>
+              <pre className="code-body"><span className="cm">{'// Before. Juggling multiple providers, manual failover'}</span>{'\n'}<span className="kw">const</span>{' helius = '}<span className="fn">createSolanaRpc</span>{'('}<span className="str">"https://mainnet.helius-rpc.com/?api-key=..."</span>{');\n'}<span className="kw">const</span>{' quicknode = '}<span className="fn">createSolanaRpc</span>{'('}<span className="str">"https://...quiknode.pro/..."</span>{');\n'}<span className="kw">const</span>{' triton = '}<span className="fn">createSolanaRpc</span>{'('}<span className="str">"https://...rpcpool.com/..."</span>{');\n\n'}<span className="cm">{'// After. One URL, kevred handles dispatch'}</span>{'\n'}<span className="kw">const</span>{' rpc = '}<span className="fn">createSolanaRpc</span>{'('}<span className="str">"https://k_3f8a9b2c1d4e6f7a.rpc-mainnet.dev.kevred.net"</span>{');\n\n'}<span className="kw">const</span>{' slot = '}<span className="kw">await</span>{' rpc.'}<span className="fn">getSlot</span>{'().'}<span className="fn">send</span>{'();\n'}<span className="cm">{'// better routing to improve reliability or speed'}</span></pre>
             )}
             {tab === 'rust' && (
-              <pre className="code-body"><span className="cm">{'// Before — single provider, capped at 50 req/s'}</span>{'\n'}<span className="kw">let</span>{' rpc = '}<span className="fn">RpcClient::new</span>{'('}<span className="str">"https://api.helius.xyz/v1?api-key=..."</span>{'.to_string());\n\n'}<span className="cm">{'// After — kevred dispatches across all your providers'}</span>{'\n'}<span className="kw">let</span>{' rpc = '}<span className="fn">RpcClient::new</span>{'('}<span className="str">"https://rpc-mainnet.kevred.com/k_3f8a9b2c1d4e6f7a"</span>{'.to_string());\n\n'}<span className="kw">let</span>{' sig = rpc.'}<span className="fn">send_transaction</span>{'(&tx).'}<span className="kw">await</span>{'?;\n'}<span className="cm">{'// ↑ routes to Helius, then QuickNode, then Triton, then loops'}</span></pre>
+              <pre className="code-body"><span className="cm">{'// Before. Juggling multiple providers, manual failover'}</span>{'\n'}<span className="kw">let</span>{' helius = '}<span className="fn">RpcClient::new</span>{'('}<span className="str">"https://mainnet.helius-rpc.com/?api-key=..."</span>{'.to_string());\n'}<span className="kw">let</span>{' quicknode = '}<span className="fn">RpcClient::new</span>{'('}<span className="str">"https://...quiknode.pro/..."</span>{'.to_string());\n'}<span className="kw">let</span>{' triton = '}<span className="fn">RpcClient::new</span>{'('}<span className="str">"https://...rpcpool.com/..."</span>{'.to_string());\n\n'}<span className="cm">{'// After. One URL, kevred handles dispatch'}</span>{'\n'}<span className="kw">let</span>{' rpc = '}<span className="fn">RpcClient::new</span>{'('}<span className="str">"https://k_3f8a9b2c1d4e6f7a.rpc-mainnet.dev.kevred.net"</span>{'.to_string());\n\n'}<span className="kw">let</span>{' slot = rpc.'}<span className="fn">get_slot</span>{'().'}<span className="kw">await</span>{'?;\n'}<span className="cm">{'// better routing to improve reliability or speed'}</span></pre>
             )}
             {tab === 'curl' && (
-              <pre className="code-body"><span className="cm">{'# Before — single provider, capped at 50 req/s'}</span>{'\n'}<span className="fn">curl</span>{' '}<span className="str">"https://api.helius.xyz/v1?api-key=..."</span>{' \\\n  -X POST -H '}<span className="str">"Content-Type: application/json"</span>{' \\\n  -d '}<span className="str">{'\'{"jsonrpc":"2.0","id":1,"method":"sendTransaction","params":[...]}\''}</span>{'\n\n'}<span className="cm">{'# After — kevred dispatches across all your providers'}</span>{'\n'}<span className="fn">curl</span>{' '}<span className="str">"https://rpc-mainnet.kevred.com/k_3f8a9b2c1d4e6f7a"</span>{' \\\n  -X POST -H '}<span className="str">"Content-Type: application/json"</span>{' \\\n  -d '}<span className="str">{'\'{"jsonrpc":"2.0","id":1,"method":"sendTransaction","params":[...]}\''}</span>{'\n'}<span className="cm">{'# ↑ routes to Helius, then QuickNode, then Triton, then loops'}</span></pre>
+              <pre className="code-body"><span className="cm">{'# Before. Juggling multiple providers, manual failover'}</span>{'\n'}<span className="fn">curl</span>{' '}<span className="str">"https://mainnet.helius-rpc.com/?api-key=..."</span>{' -X POST -d '}<span className="str">{'\'{...}\''}</span>{'\n'}<span className="fn">curl</span>{' '}<span className="str">"https://...quiknode.pro/..."</span>{' -X POST -d '}<span className="str">{'\'{...}\''}</span>{'\n'}<span className="fn">curl</span>{' '}<span className="str">"https://...rpcpool.com/..."</span>{' -X POST -d '}<span className="str">{'\'{...}\''}</span>{'\n\n'}<span className="cm">{'# After. One URL, kevred handles dispatch'}</span>{'\n'}<span className="fn">curl</span>{' '}<span className="str">"https://k_3f8a9b2c1d4e6f7a.rpc-mainnet.dev.kevred.net"</span>{' \\\n  -X POST -H '}<span className="str">"Content-Type: application/json"</span>{' \\\n  -d '}<span className="str">{'\'{"jsonrpc":"2.0","id":1,"method":"getSlot"}\''}</span>{'\n'}<span className="cm">{'# better routing to improve reliability or speed'}</span></pre>
             )}
           </div>
         </div>
@@ -108,27 +121,27 @@ export default function App() {
       <section id="features">
         <div className="container">
           <div className="section-label">Built for production</div>
-          <h2>Reliability without the wiring</h2>
-          <p className="section-sub">Edge-deployed on Cloudflare. Atomic round-robin via Durable Objects. Sub-10ms overhead.</p>
+          <h2>Reliability or speed. Without the wiring.</h2>
+          <p className="section-sub">Edge-deployed on Cloudflare. Sub-10ms overhead.</p>
 
           <div className="features">
             <div className="feature">
-              <div className="feature-icon">↻</div>
-              <h3>Atomic round-robin</h3>
-              <p>One Durable Object per client guarantees serialized counter access. No two requests ever hit the same provider out of turn.</p>
+              <div className="feature-icon">↗</div>
+              <h3>Speed</h3>
+              <p>Parallel mode races every provider at once and returns the fastest response. No more guessing which RPC is quickest.</p>
             </div>
             <div className="feature">
               <div className="feature-icon">⊘</div>
               <h3>Better reliability</h3>
-              <p>Transient network errors fail over to the next provider on the same request — your client sees a single successful response. Providers that keep failing are excluded for 30s, then probed and restored as soon as they recover.</p>
+              <p>Transient network errors fail over to the next provider on the same request. Your client sees a single successful response.</p>
             </div>
             <div className="feature">
               <div className="feature-icon">⚿</div>
-              <h3>BYOK, encrypted</h3>
-              <p>Your keys, your quota. AES-encrypted at rest inside the Durable Object. We never resell access.</p>
+              <h3>Bring your own keys</h3>
+              <p>Your keys, your quota. Stored securely, scoped to your account. We never resell access.</p>
             </div>
             <div className="feature">
-              <div className="feature-icon">⚡</div>
+              <div className="feature-icon">⚡︎</div>
               <h3>Edge dispatch</h3>
               <p>Runs on Cloudflare Workers, deployed globally across 300+ edge locations. Less than 8ms added latency compared to calling your provider directly.</p>
             </div>
@@ -140,7 +153,7 @@ export default function App() {
         <div className="container">
           <div className="section-label">Dashboard</div>
           <h2>Every provider, one pane of glass</h2>
-          <p className="section-sub">Aggregated metrics, circuit breaker state, and your endpoint — all in one place.</p>
+          <p className="section-sub">Aggregated metrics, circuit breaker state, and your endpoint, all in one place.</p>
 
           <div className="dash-preview">
             <div className="dash-bar">
@@ -169,36 +182,41 @@ export default function App() {
               <div className="provider-list">
                 <div className="provider-row head">
                   <div>Provider</div>
-                  <div>Status</div>
                   <div>Share</div>
-                  <div>p50 latency</div>
+                  <div>p50</div>
+                  <div>p90</div>
+                  <div>p99</div>
                   <div>Errors</div>
                 </div>
                 <div className="provider-row">
                   <div className="provider-name"><span className="dot"></span> Helius</div>
-                  <div><span className="badge closed">Healthy</span></div>
                   <div className="mono">34.2%</div>
                   <div className="mono">72 ms</div>
+                  <div className="mono">145 ms</div>
+                  <div className="mono">320 ms</div>
                   <div className="mono">0.14%</div>
                 </div>
                 <div className="provider-row">
                   <div className="provider-name"><span className="dot"></span> QuickNode</div>
-                  <div><span className="badge closed">Healthy</span></div>
                   <div className="mono">33.5%</div>
                   <div className="mono">91 ms</div>
+                  <div className="mono">180 ms</div>
+                  <div className="mono">410 ms</div>
                   <div className="mono">0.19%</div>
                 </div>
                 <div className="provider-row">
                   <div className="provider-name"><span className="dot warn"></span> Triton</div>
-                  <div><span className="badge half">Recovering</span></div>
                   <div className="mono">22.8%</div>
                   <div className="mono">118 ms</div>
+                  <div className="mono">240 ms</div>
+                  <div className="mono">580 ms</div>
                   <div className="mono">1.42%</div>
                 </div>
                 <div className="provider-row">
                   <div className="provider-name"><span className="dot err"></span> Alchemy</div>
-                  <div><span className="badge open">Excluded</span></div>
                   <div className="mono">9.5%</div>
+                  <div className="mono">— ms</div>
+                  <div className="mono">— ms</div>
                   <div className="mono">— ms</div>
                   <div className="mono">17.8%</div>
                 </div>
@@ -211,55 +229,14 @@ export default function App() {
       <section id="pricing">
         <div className="container">
           <div className="section-label">Pricing</div>
-          <h2>Pay for what you dispatch</h2>
-          <p className="section-sub">Your provider quotas stay yours. We charge only for the proxy.</p>
-
-          <div className="pricing">
-            <div className="price-card">
-              <div className="price-name">Free</div>
-              <div className="price-amount">$0<span className="per"> / month</span></div>
-              <div className="price-desc">For testing and personal projects.</div>
-              <ul className="price-features">
-                <li>Up to 2 providers</li>
-                <li>100k requests / month</li>
-                <li>Circuit breaker (default config)</li>
-                <li>Community support</li>
-              </ul>
-              <a href={`${APP_URL}/login`} className="btn price-cta">Start free</a>
-            </div>
-
-            <div className="price-card featured">
-              <div className="price-name">Pro</div>
-              <div className="price-amount">$29<span className="per"> / month</span></div>
-              <div className="price-desc">For teams shipping on mainnet.</div>
-              <ul className="price-features">
-                <li>Up to 8 providers</li>
-                <li>10M requests / month</li>
-                <li>Custom circuit breaker thresholds</li>
-                <li>Per-provider metrics & alerts</li>
-                <li>Priority support</li>
-              </ul>
-              <a href={`${APP_URL}/login`} className="btn btn-primary price-cta">Upgrade to Pro</a>
-            </div>
-
-            <div className="price-card">
-              <div className="price-name">Scale</div>
-              <div className="price-amount">Custom</div>
-              <div className="price-desc">High-throughput infra, validator routing.</div>
-              <ul className="price-features">
-                <li>Unlimited providers</li>
-                <li>Volume pricing per million reqs</li>
-                <li>Dedicated routing rules</li>
-              </ul>
-              <a href="#contact" className="btn price-cta">Talk to us</a>
-            </div>
-          </div>
+          <h2>Free, for now.</h2>
+          <p className="section-sub">All features unlocked. No limits. Pricing will land soon.</p>
         </div>
       </section>
 
       <section className="cta-final">
         <div className="container">
-          <h2>Multiply your throughput in 60 seconds.</h2>
+          <h2>Stop choosing your RPC.<br />Start using all of them in 60 seconds.</h2>
           <p>Paste your provider keys. Get one URL. Ship.</p>
           <div className="hero-cta">
             <a href={`${APP_URL}/login`} className="btn btn-primary">Get started →</a>
@@ -274,7 +251,7 @@ export default function App() {
           <div className="footer-links">
             <a href="#">Docs</a>
             <a href="#">Status</a>
-            <a href="#">GitHub</a>
+            <a href="https://github.com/kevredlabs/kevred" target="_blank" rel="noopener noreferrer">GitHub</a>
             <a href="#">Privacy</a>
           </div>
         </div>
