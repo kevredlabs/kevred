@@ -3,8 +3,7 @@ name: app · build & publish image
 on:
   push:
     tags:
-      - 'app-v*.*.*-prod'
-      - 'app-v*.*.*-develop'
+      - 'v*.*.*'
 
 jobs:
   build-push:
@@ -12,6 +11,9 @@ jobs:
     permissions:
       contents: read
       packages: write
+    strategy:
+      matrix:
+        env: [prod, develop]
     steps:
       - uses: actions/checkout@v4
 
@@ -23,13 +25,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - id: vars
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
       - id: meta
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/kevredlabs/kevred-app
           tags: |
-            type=raw,value=${{ contains(github.ref_name, '-prod') && 'latest' || 'develop' }}
-            type=raw,value=${{ github.ref_name }}
+            type=raw,value=${{ matrix.env == 'prod' && 'latest' || 'develop' }}
+            type=raw,value=${{ steps.vars.outputs.version }}-${{ matrix.env }}
 
       - uses: docker/build-push-action@v6
         with:
@@ -38,6 +43,6 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            VITE_API_URL=${{ contains(github.ref_name, '-prod') && 'https://api.kevred.com' || 'https://api.develop.kevred.com' }}
+            VITE_API_URL=${{ matrix.env == 'prod' && 'https://api.kevred.com' || 'https://api.develop.kevred.com' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

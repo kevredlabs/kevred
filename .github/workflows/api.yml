@@ -3,7 +3,7 @@ name: api · build & publish image
 on:
   push:
     tags:
-      - 'api-v*.*.*'
+      - 'v*.*.*'
 
 jobs:
   build-push:
@@ -22,13 +22,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - id: vars
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
       - id: meta
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/kevredlabs/kevred-api
           tags: |
             type=raw,value=latest
-            type=raw,value=${{ github.ref_name }}
+            type=raw,value=${{ steps.vars.outputs.version }}
 
       - uses: docker/build-push-action@v6
         with:

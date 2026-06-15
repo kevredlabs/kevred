@@ -32,29 +32,29 @@ Update the relevant README(s) in each PR if the change affects setup, configurat
 
 ## Releasing (pushing a tag to trigger CI)
 
-Each service has its own tag namespace: `api-v*`, `app-v*`, `www-v*`.
-
-- `app` and `www` require an environment suffix: `-develop` or `-prod`
-- `api` has a single environment — no suffix
+A single tag `v*.*.*` triggers all 5 image builds in parallel:
+- `kevred-api:<version>`
+- `kevred-app:<version>-prod` and `kevred-app:<version>-develop`
+- `kevred-www:<version>-prod` and `kevred-www:<version>-develop`
 
 **Process when the user asks to push a tag:**
 
-1. Fetch the latest tags for the relevant service:
+1. Fetch the latest tags:
    ```bash
-   git tag --list '<service>-v*' --sort=-version:refname | head -5
+   git tag --list 'v*' --sort=-version:refname | head -5
    ```
 2. Determine the next version:
-   - If the changes add a new feature → bump **minor** (`1.0.0` → `1.1.0`)
-   - If the changes is a bug fix → bump **patch** (`1.0.0` → `1.0.1`)
+   - New feature → bump **minor** (`1.0.0` → `1.1.0`)
+   - Bug fix → bump **patch** (`1.0.0` → `1.0.1`)
    - If unclear, ask: "Is this a feature (minor) or a fix (patch)?"
-3. Propose the tag: e.g. `www-v1.1.0-develop` — confirm before pushing.
+3. Propose the tag: e.g. `v1.1.0` — confirm before pushing.
 4. Push the tag:
    ```bash
-   git tag www-v1.1.0-develop
-   git push origin www-v1.1.0-develop
+   git tag v1.1.0
+   git push origin v1.1.0
    ```
 
-Never push a `-prod` tag without explicit confirmation from the user.
+Since every tag publishes to prod, always require explicit confirmation before pushing.
 
 ## Browser automation
 
