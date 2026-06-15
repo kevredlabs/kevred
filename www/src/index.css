@@ -83,16 +83,24 @@ nav {
 }
 .hero-inner { position: relative; text-align: center; }
 .pill {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 6px 14px; border-radius: 999px;
-  border: 1px solid var(--border-hi);
-  background: var(--bg-elev);
-  font-size: 13px; color: var(--text-dim);
-  margin-bottom: 28px;
+  display: inline-flex; align-items: center; gap: 12px;
+  font-size: 15px; font-weight: 500;
+  color: var(--text-dim); letter-spacing: -0.005em;
+  margin-bottom: 32px;
+  transition: color 0.2s;
 }
+.pill:hover { color: var(--text); }
 .pill-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--accent); box-shadow: 0 0 8px var(--accent);
+  position: relative;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
+  animation: pill-pulse 2s ease-out infinite;
+}
+@keyframes pill-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6); }
+  70%  { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
 }
 h1 {
   font-size: 64px; line-height: 1.05; letter-spacing: -0.03em;
@@ -186,6 +194,7 @@ h2 {
   letter-spacing: -0.01em;
 }
 .step p { color: var(--text-dim); font-size: 14px; }
+.step p strong { color: var(--text); font-weight: 600; }
 
 /* ── Code block ──────────────────────────── */
 .code-block {
@@ -291,7 +300,7 @@ h2 {
 }
 .provider-row {
   display: grid;
-  grid-template-columns: 1fr 120px 100px 120px 80px;
+  grid-template-columns: 1fr 80px 80px 80px 80px 80px;
   align-items: center; gap: 16px;
   padding: 16px 20px;
   border-bottom: 1px solid var(--border);
@@ -320,46 +329,6 @@ h2 {
 .badge.open { background: rgba(239, 68, 68, 0.15); color: var(--red); }
 .provider-row .mono { font-size: 13px; color: var(--text-dim); }
 
-/* ── Pricing ───────────────────────────────── */
-.pricing { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-.price-card {
-  background: var(--bg-elev);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 32px 28px;
-  display: flex; flex-direction: column;
-}
-.price-card.featured {
-  border-color: var(--accent);
-  background: linear-gradient(180deg, rgba(0, 111, 255, 0.04), var(--bg-elev) 60%);
-  position: relative;
-}
-.price-card.featured::before {
-  content: 'Most popular'; position: absolute; top: -10px; left: 28px;
-  background: var(--accent); color: #000;
-  padding: 3px 10px; border-radius: 4px;
-  font-size: 11px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.05em;
-}
-.price-name { font-size: 14px; color: var(--text-dim); margin-bottom: 12px; }
-.price-amount {
-  font-size: 40px; font-weight: 700; letter-spacing: -0.02em;
-  margin-bottom: 4px;
-}
-.price-amount .per {
-  font-size: 14px; color: var(--text-muted); font-weight: 400;
-}
-.price-desc { color: var(--text-dim); font-size: 14px; margin-bottom: 24px; }
-.price-features { list-style: none; margin-bottom: 28px; }
-.price-features li {
-  padding: 8px 0; font-size: 14px; color: var(--text-dim);
-  display: flex; gap: 10px; align-items: flex-start;
-}
-.price-features li::before {
-  content: '✓'; color: var(--accent); flex-shrink: 0;
-}
-.price-cta { margin-top: auto; }
-
 /* ── Final CTA ─────────────────────────────── */
 .cta-final {
   text-align: center; padding: 120px 0;
@@ -384,7 +353,7 @@ footer {
 @media (max-width: 760px) {
   h1 { font-size: 40px; }
   h2 { font-size: 28px; }
-  .steps, .features, .pricing { grid-template-columns: 1fr; }
+  .steps, .features { grid-template-columns: 1fr; }
   .dash-stats { grid-template-columns: 1fr; }
   .provider-row { grid-template-columns: 1fr; gap: 6px; }
   .provider-row.head { display: none; }
