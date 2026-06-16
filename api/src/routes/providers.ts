@@ -1,6 +1,6 @@
 import { Router, Response } from "express";
 import { requireAuth, AuthRequest } from "../middleware/auth";
-import { User, IProvider } from "../models/User";
+import { User, IProvider, RoutingMode } from "../models/User";
 import { putCustomerConfig } from "../lib/cloudflareKv";
 
 const router = Router();
@@ -8,6 +8,7 @@ const router = Router();
 const MAX_PROVIDERS = 5;
 const MAX_URL_LENGTH = 2048;
 const MAX_LABEL_LENGTH = 100;
+const VALID_MODES: RoutingMode[] = ["sequential", "parallel"];
 
 function validateProviders(input: unknown): IProvider[] | string {
   if (!Array.isArray(input)) return "providers must be an array";
@@ -38,13 +39,19 @@ router.get("/providers", requireAuth, async (req: AuthRequest, res: Response) =>
     res.status(404).json({ error: "User not found" });
     return;
   }
-  res.json({ customerId: user.customerId, providers: user.providers });
+  res.json({ customerId: user.customerId, providers: user.providers, mode: user.mode });
 });
 
 router.put("/providers", requireAuth, async (req: AuthRequest, res: Response) => {
   const validated = validateProviders(req.body?.providers);
   if (typeof validated === "string") {
     res.status(400).json({ error: validated });
+    return;
+  }
+
+  const rawMode = req.body?.mode;
+  if (rawMode !== undefined && !VALID_MODES.includes(rawMode)) {
+    res.status(400).json({ error: "mode must be 'sequential' or 'parallel'" });
     return;
   }
 
@@ -55,17 +62,18 @@ router.put("/providers", requireAuth, async (req: AuthRequest, res: Response) =>
   }
 
   user.providers = validated;
+  if (rawMode) user.mode = rawMode;
   await user.save();
 
   try {
-    await putCustomerConfig(user.customerId, validated.map((p) => p.url));
+    await putCustomerConfig(user.customerId, validated.map((p) => p.url), user.mode);
   } catch (err) {
-    console.error("Cloudflare KV sync failed:", err);
+    console.error("Cloudflare KV sync failed");
     res.status(502).json({ error: "Failed to sync configuration with proxy" });
     return;
   }
 
-  res.json({ customerId: user.customerId, providers: user.providers });
+  res.json({ customerId: user.customerId, providers: user.providers, mode: user.mode });
 });
 
 export default router;
