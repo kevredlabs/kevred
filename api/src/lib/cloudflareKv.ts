@@ -10,7 +10,13 @@ function getCfEnv() {
   return { accountId, namespaceId, token };
 }
 
-export async function putCustomerConfig(customerId: string, endpoints: string[]): Promise<void> {
+export type RoutingMode = "sequential" | "parallel";
+
+export async function putCustomerConfig(
+  customerId: string,
+  endpoints: string[],
+  mode: RoutingMode
+): Promise<void> {
   const { accountId, namespaceId, token } = getCfEnv();
   const key = `config:${customerId}`;
   const url = `${CF_API_BASE}/accounts/${accountId}/storage/kv/namespaces/${namespaceId}/values/${encodeURIComponent(key)}`;
@@ -21,7 +27,7 @@ export async function putCustomerConfig(customerId: string, endpoints: string[])
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ endpoints }),
+    body: JSON.stringify({ endpoints, mode }),
   });
 
   if (!res.ok) {

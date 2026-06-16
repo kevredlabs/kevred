@@ -52,7 +52,8 @@ export async function logout(): Promise<void> {
 }
 
 export type Provider = { label: string; url: string };
-export type ProvidersResponse = { customerId: string; providers: Provider[] };
+export type RoutingMode = "sequential" | "parallel";
+export type ProvidersResponse = { customerId: string; providers: Provider[]; mode: RoutingMode };
 
 export async function fetchProviders(): Promise<ProvidersResponse> {
   const res = await fetch(`${API_BASE}/providers`, { credentials: "include" });
@@ -60,12 +61,15 @@ export async function fetchProviders(): Promise<ProvidersResponse> {
   return res.json();
 }
 
-export async function putProviders(providers: Provider[]): Promise<ProvidersResponse> {
+export async function putProviders(
+  providers: Provider[],
+  mode?: RoutingMode
+): Promise<ProvidersResponse> {
   const res = await fetch(`${API_BASE}/providers`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
-    body: JSON.stringify({ providers }),
+    body: JSON.stringify(mode ? { providers, mode } : { providers }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));

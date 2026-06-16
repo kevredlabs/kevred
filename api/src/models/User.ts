@@ -5,10 +5,13 @@ export interface IProvider {
   url: string;
 }
 
+export type RoutingMode = "sequential" | "parallel";
+
 export interface IUser extends Document {
   email: string;
   customerId: string;
   providers: IProvider[];
+  mode: RoutingMode;
   createdAt: Date;
 }
 
@@ -25,6 +28,7 @@ const UserSchema = new Schema<IUser>(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     customerId: { type: String, required: true, unique: true, index: true },
     providers: { type: [ProviderSchema], default: [] },
+    mode: { type: String, enum: ["sequential", "parallel"], default: "sequential" },
   },
   { timestamps: true }
 );
