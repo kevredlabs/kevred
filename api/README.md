@@ -51,7 +51,8 @@ gcloud compute ssh app --tunnel-through-iap -- -L 27017:localhost:27017 -N
 | `MAIL_FROM_NAME` | No (default `Kevred`) | Sender display name |
 | `CF_ACCOUNT_ID` | Yes | Cloudflare account id — same value across envs |
 | `CF_KV_NAMESPACE_ID` | Yes | Cloudflare KV namespace id — **different per env** (see below) |
-| `CF_API_TOKEN` | Yes | Cloudflare API token with `Workers KV Storage: Edit` permission |
+| `CF_API_TOKEN` | Yes | Cloudflare API token with `Workers KV Storage: Edit` **and** `Account Analytics: Read` permissions |
+| `CF_ANALYTICS_ENV` | No (default `dev`) | Selects the Analytics Engine dataset: `dev` → `rpc_requests_dev`, `prod` → `rpc_requests_prod` |
 | `RPC_DOMAIN` | No (default `rpc-mainnet.dev.kevred.net`) | Domain suffix returned by `/auth/me` so the dashboard can display the user's endpoint as `{customerId}.{RPC_DOMAIN}` — **different per env** (see below) |
 
 Two databases and two Cloudflare KV namespaces are in use — one per environment. The API must point at the namespace matching its environment, otherwise the dev API would write into the prod proxy's config (and vice versa).
@@ -86,6 +87,15 @@ The JWT is stored in an `HttpOnly; Secure; SameSite=Strict` cookie named `token`
 Validation: max 5 providers, HTTPS only, max 2 kB per URL, max 100 chars per label. Array order = priority (first = highest priority).
 
 On success, the API writes `{ endpoints: [url1, url2, ...] }` to Cloudflare KV under `config:{customerId}` so the `cloudflare-rpc` Worker picks it up immediately. If the KV write fails, the response is `502` and the MongoDB state is intentionally kept — the user can retry.
+
+### Metrics
+
+| Method | Path | Auth required | Description |
+|---|---|---|---|
+| `GET` | `/metrics/summary` | Yes | End-to-end RPC metrics over the last 24h for the connected user: `{ requests, errorRate, p50Ms }` |
+| `GET` | `/metrics/providers` | Yes | Per-upstream-provider metrics over the last 24h: `{ providers: [{ host, requests, errorRate, p50, p90, p99 }, ...] }` |
+
+Both endpoints query the Cloudflare Analytics Engine dataset selected by `CF_ANALYTICS_ENV`. The `customerId` filter is derived from the session, never accepted from the client. All aggregates are weighted by `_sample_interval` to compensate for AE sampling.
 
 ### Health
 

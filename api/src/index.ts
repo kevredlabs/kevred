@@ -6,6 +6,7 @@ import { connectDb } from "./db";
 import healthRouter from "./routes/health";
 import authRouter from "./routes/auth";
 import providersRouter from "./routes/providers";
+import metricsRouter from "./routes/metrics";
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;
@@ -19,6 +20,7 @@ app.use(cookieParser());
 app.use(healthRouter);
 app.use(authRouter);
 app.use(providersRouter);
+app.use(metricsRouter);
 
 connectDb()
   .then(() => {
