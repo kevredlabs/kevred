@@ -61,6 +61,30 @@ export async function fetchProviders(): Promise<ProvidersResponse> {
   return res.json();
 }
 
+export type MetricsSummary = { requests: number; errorRate: number; p50Ms: number };
+
+export async function fetchMetricsSummary(): Promise<MetricsSummary> {
+  const res = await fetch(`${API_BASE}/metrics/summary`, { credentials: "include" });
+  if (!res.ok) throw new Error("Failed to load metrics summary");
+  return res.json();
+}
+
+export type ProviderMetric = {
+  host: string;
+  requests: number;
+  errorRate: number;
+  p50: number;
+  p90: number;
+  p99: number;
+};
+
+export async function fetchMetricsProviders(): Promise<ProviderMetric[]> {
+  const res = await fetch(`${API_BASE}/metrics/providers`, { credentials: "include" });
+  if (!res.ok) throw new Error("Failed to load provider metrics");
+  const body = (await res.json()) as { providers: ProviderMetric[] };
+  return body.providers;
+}
+
 export async function putProviders(
   providers: Provider[],
   mode?: RoutingMode
