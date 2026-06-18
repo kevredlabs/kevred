@@ -94,8 +94,10 @@ On success, the API writes `{ endpoints: [url1, url2, ...] }` to Cloudflare KV u
 |---|---|---|---|
 | `GET` | `/metrics/summary` | Yes | End-to-end RPC metrics over the last 24h for the connected user: `{ requests, errorRate, p50Ms }` |
 | `GET` | `/metrics/providers` | Yes | Per-upstream-provider metrics over the last 24h: `{ providers: [{ host, requests, errorRate, p50, p90, p99 }, ...] }` |
+| `GET` | `/metrics/status-codes` | Yes | HTTP response code distribution over the last 24h: `{ codes: [{ status, requests }, ...] }` |
+| `GET` | `/metrics/timeseries` | Yes | Client-facing requests in 5-min buckets over the last 24h: `{ points: [{ t, requests }, ...] }` |
 
-Both endpoints query the Cloudflare Analytics Engine dataset selected by `CF_ANALYTICS_ENV`, reusing the same `CF_API_TOKEN` as the KV writes (no separate token). The `customerId` filter is derived from the session, never accepted from the client. All aggregates are weighted by `_sample_interval` to compensate for AE sampling.
+These endpoints query the Cloudflare Analytics Engine dataset selected by `CF_ANALYTICS_ENV`, reusing the same `CF_API_TOKEN` as the KV writes (no separate token). The `customerId` filter is derived from the session, never accepted from the client. All aggregates are weighted by `_sample_interval` to compensate for AE sampling.
 
 ### Health
 

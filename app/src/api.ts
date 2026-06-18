@@ -85,6 +85,24 @@ export async function fetchMetricsProviders(): Promise<ProviderMetric[]> {
   return body.providers;
 }
 
+export type TimeseriesPoint = { t: string; requests: number };
+
+export async function fetchMetricsTimeseries(): Promise<TimeseriesPoint[]> {
+  const res = await fetch(`${API_BASE}/metrics/timeseries`, { credentials: "include" });
+  if (!res.ok) throw new Error("Failed to load timeseries metrics");
+  const body = (await res.json()) as { points: TimeseriesPoint[] };
+  return body.points;
+}
+
+export type StatusCodeMetric = { status: string; requests: number };
+
+export async function fetchMetricsStatusCodes(): Promise<StatusCodeMetric[]> {
+  const res = await fetch(`${API_BASE}/metrics/status-codes`, { credentials: "include" });
+  if (!res.ok) throw new Error("Failed to load status code metrics");
+  const body = (await res.json()) as { codes: StatusCodeMetric[] };
+  return body.codes;
+}
+
 export async function putProviders(
   providers: Provider[],
   mode?: RoutingMode
