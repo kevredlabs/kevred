@@ -44,7 +44,12 @@ export default function App() {
           <div className="pill"><span className="pill-dot"></span> Live on Solana mainnet</div>
           <h1>Stop choosing your RPC.<br /><span className="accent">Use them all.</span></h1>
           <p className="lead">
-            Bring your own keys. We dispatch <strong>every RPC call</strong> across Helius, QuickNode, Triton and more.<br />
+            Any RPC can rate-limit, throttle or break.<br />
+            And you never know which one will hold under load.<br />
+            <br />
+            Stop betting on a single provider.<br />
+            Bring your own keys, we dispatch <strong>every RPC call</strong> across Helius, QuickNode, Triton and more.<br />
+            <br />
             Pick <strong>sequential</strong> for reliability or <strong>parallel</strong> for speed.
           </p>
           <div className="hero-cta">
