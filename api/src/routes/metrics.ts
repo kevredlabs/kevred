@@ -23,6 +23,16 @@ interface ProviderRow {
   p99: number | null;
 }
 
+interface StatusCodeRow {
+  status: string;
+  requests: number | null;
+}
+
+interface TimeseriesRow {
+  t: string;
+  requests: number | null;
+}
+
 async function getCustomerId(userId: string): Promise<string | null> {
   const user = await User.findById(userId).select("customerId");
   if (!user) return null;
@@ -93,6 +103,65 @@ router.get("/metrics/providers", requireAuth, async (req: AuthRequest, res: Resp
     res.json({ providers });
   } catch (err) {
     console.error("Analytics Engine providers query failed", err);
+    res.status(502).json({ error: "Failed to fetch metrics" });
+  }
+});
+
+router.get("/metrics/status-codes", requireAuth, async (req: AuthRequest, res: Response) => {
+  const customerId = await getCustomerId(req.user!.userId);
+  if (!customerId) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+
+  const sql = `
+    SELECT blob3 AS status,
+           SUM(_sample_interval) AS requests
+    FROM ${getDataset()}
+    WHERE blob1 = '${customerId}' AND blob7 = 'attempt'
+      AND timestamp > NOW() - ${WINDOW}
+    GROUP BY status
+  `;
+
+  try {
+    const rows = await querySql<StatusCodeRow>(sql);
+    const codes = rows.map((r) => ({
+      status: r.status ?? "",
+      requests: Number(r.requests ?? 0),
+    }));
+    res.json({ codes });
+  } catch (err) {
+    console.error("Analytics Engine status-codes query failed", err);
+    res.status(502).json({ error: "Failed to fetch metrics" });
+  }
+});
+
+router.get("/metrics/timeseries", requireAuth, async (req: AuthRequest, res: Response) => {
+  const customerId = await getCustomerId(req.user!.userId);
+  if (!customerId) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+
+  const sql = `
+    SELECT toStartOfInterval(timestamp, INTERVAL '5' MINUTE) AS t,
+           SUM(_sample_interval) AS requests
+    FROM ${getDataset()}
+    WHERE blob1 = '${customerId}' AND blob7 = 'summary'
+      AND timestamp > NOW() - ${WINDOW}
+    GROUP BY t
+    ORDER BY t
+  `;
+
+  try {
+    const rows = await querySql<TimeseriesRow>(sql);
+    const points = rows.map((r) => ({
+      t: r.t,
+      requests: Number(r.requests ?? 0),
+    }));
+    res.json({ points });
+  } catch (err) {
+    console.error("Analytics Engine timeseries query failed", err);
     res.status(502).json({ error: "Failed to fetch metrics" });
   }
 });
