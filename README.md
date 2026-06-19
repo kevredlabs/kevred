@@ -85,19 +85,18 @@ Out of scope for v1:
 
 ## Repository layout
 
-This monorepo contains three deployable services. The Cloudflare Worker (the actual RPC proxy) lives in a sibling repository.
+This monorepo contains four deployable services, including the Cloudflare Worker that implements the actual RPC proxy.
 
 | Path | Service | Stack |
 |---|---|---|
 | [`api/`](api/) | Backend REST API (auth, providers, metrics) | Node.js 24 · Express 5 · MongoDB |
 | [`app/`](app/) | Dashboard (authenticated) | React 19 · Vite 6 · nginx |
 | [`www/`](www/) | Public landing page | React 19 · Vite 6 · nginx |
+| [`cf-worker/`](cf-worker/) | Cloudflare Worker RPC proxy | Cloudflare Workers · TypeScript · Wrangler |
 
 Each subdirectory has its own `README.md` with setup, env vars, endpoints and CI details.
 
-## Related repository
-
-**[`kevredlabs/cloudflare-rpc`](https://github.com/kevredlabs/cloudflare-rpc)** — the Cloudflare Worker that implements the actual RPC proxy. It reads each customer's ordered provider list and routing mode from Cloudflare KV (written by `kevred-api`) and dispatches each request according to that mode: `sequential` falls over to the next provider on `429/5xx`, `parallel` fans out to all providers and returns the first success. A per-provider circuit breaker excludes a provider after N consecutive failures and probes it back to life. Every attempt and end-to-end summary is written to Cloudflare Analytics Engine, which `kevred-api`'s `/metrics/*` endpoints query back. The two repositories are tightly coupled by the KV namespace and the Analytics Engine dataset.
+The Worker reads each customer's ordered provider list and routing mode from Cloudflare KV (written by `kevred-api`) and dispatches each request according to that mode: `sequential` falls over to the next provider on `429/5xx`, `parallel` fans out to all providers and returns the first success. A per-provider circuit breaker excludes a provider after N consecutive failures and probes it back to life. Every attempt and end-to-end summary is written to Cloudflare Analytics Engine, which `kevred-api`'s `/metrics/*` endpoints query back. The Worker, the API and the dashboard are tightly coupled by the KV namespace and the Analytics Engine dataset.
 
 ## Development setup
 
@@ -110,9 +109,10 @@ cd app && yarn install && yarn dev
 
 # Landing
 cd www && yarn install && yarn dev
-```
 
-For the RPC Worker itself, see [`kevredlabs/cloudflare-rpc`](https://github.com/kevredlabs/cloudflare-rpc).
+# Cloudflare Worker (RPC proxy)
+cd cf-worker && yarn install && yarn dev
+```
 
 ## Team
 
