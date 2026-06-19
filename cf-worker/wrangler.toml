@@ -1,0 +1,39 @@
+name = "cloudflare-rpc"
+main = "src/index.ts"
+compatibility_date = "2026-05-26"
+
+[observability.logs]
+enabled = true
+invocation_logs = true
+
+[env.prod]
+name = "cloudflare-rpc-prod"
+
+[[env.prod.routes]]
+pattern = "*.rpc-mainnet.kevred.net"
+zone_name = "kevred.net"
+
+[[env.prod.kv_namespaces]]
+binding = "CONFIG"
+id = "0bc65b1e138c4a8597502fcb1b8b8f2e"
+preview_id = "286ce2da13d94701954125da67815ea5"
+
+[[env.prod.analytics_engine_datasets]]
+binding = "ANALYTICS"
+dataset = "rpc_requests_prod"
+
+[env.dev]
+name = "cloudflare-rpc-dev"
+
+[[env.dev.routes]]
+pattern = "*.rpc-mainnet.dev.kevred.net"
+zone_name = "kevred.net"
+
+[[env.dev.kv_namespaces]]
+binding = "CONFIG"
+id = "7ae28097b933461b8cefd914974fc322"
+preview_id = "afb8c63dc2c4495c88e92182da6de91c"
+
+[[env.dev.analytics_engine_datasets]]
+binding = "ANALYTICS"
+dataset = "rpc_requests_dev"
