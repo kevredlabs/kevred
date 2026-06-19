@@ -1,6 +1,6 @@
 # kevred-www
 
-React / TypeScript landing page. Served at the root domain (`kevred.io`). Links to `kevred-app` for authentication.
+React / TypeScript landing page. Served at the root domain (`kevred.com`). Links to `kevred-app` for authentication.
 
 ## Stack
 
@@ -39,16 +39,32 @@ This variable is baked into the bundle at build time by Vite. It **must** be set
 
 ```bash
 docker build \
-  --build-arg VITE_APP_URL=https://app.kevred.io \
+  --build-arg VITE_APP_URL=https://app.kevred.com \
   -t kevred-www .
 docker run -p 80:80 kevred-www
 ```
 
 ## CI — build & publish image
 
-Two separate builds for develop and prod — the "Log in" / "Get started" links point to different app environments:
+**Workflow:** [`.github/workflows/www.yml`](../.github/workflows/www.yml)  
+**Trigger:** push of a tag matching `v*.*.*` (the same tag triggers `api` and `app` builds in parallel — see the root [`CLAUDE.md`](../CLAUDE.md)).
 
-| Environment | `VITE_APP_URL` baked in |
-|---|---|
-| develop | `https://app.dev.kevred.io` |
-| prod | `https://app.kevred.io` |
+```bash
+git tag v1.2.3
+git push origin v1.2.3
+```
+
+**Two environments, one workflow — a matrix builds both in parallel:**
+
+| Matrix env | `VITE_APP_URL` baked in | Docker tags pushed |
+|---|---|---|
+| `develop` | `https://app.develop.kevred.com` | `develop`, `1.2.3-develop` |
+| `prod` | `https://app.kevred.com` | `latest`, `1.2.3-prod` |
+
+**Steps:**
+
+1. Checks out the repo.
+2. Builds the Docker image from `./www` for each matrix entry, passing the matching `VITE_APP_URL` as a build-arg.
+3. Pushes to GHCR as `ghcr.io/kevredlabs/kevred-www` with the tags above.
+
+Authentication to GHCR uses the built-in `GITHUB_TOKEN` — no secrets to configure.

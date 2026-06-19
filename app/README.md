@@ -61,29 +61,24 @@ In production, the image is pulled and run on a GCP VM via Docker Compose.
 ## CI — build & publish image
 
 **Workflow:** [`.github/workflows/app.yml`](../.github/workflows/app.yml)  
-**Trigger:** push of a tag matching `app-v*.*.*-prod` or `app-v*.*.*-develop`
+**Trigger:** push of a tag matching `v*.*.*` (the same tag triggers `api` and `www` builds in parallel — see the root [`CLAUDE.md`](../CLAUDE.md)).
 
 ```bash
-# develop
-git tag app-v1.2.3-develop
-git push origin app-v1.2.3-develop
-
-# production
-git tag app-v1.2.3-prod
-git push origin app-v1.2.3-prod
+git tag v1.2.3
+git push origin v1.2.3
 ```
 
-**Two environments, one workflow — tag suffix controls everything:**
+**Two environments, one workflow — a matrix builds both in parallel:**
 
-| Tag suffix | `VITE_API_URL` baked in | Docker tags pushed |
+| Matrix env | `VITE_API_URL` baked in | Docker tags pushed |
 |---|---|---|
-| `-develop` | `https://api.develop.kevred.com` | `develop`, `app-v1.2.3-develop` |
-| `-prod` | `https://api.kevred.com` | `latest`, `app-v1.2.3-prod` |
+| `develop` | `https://api.develop.kevred.com` | `develop`, `1.2.3-develop` |
+| `prod` | `https://api.kevred.com` | `latest`, `1.2.3-prod` |
 
 **Steps:**
 
 1. Checks out the repo.
-2. Builds the Docker image from `./app`, passing `VITE_API_URL` as a build-arg.
-3. Pushes to GHCR as `ghcr.io/kevredlabs/kevred-app` with the two tags above.
+2. Builds the Docker image from `./app` for each matrix entry, passing the matching `VITE_API_URL` as a build-arg.
+3. Pushes to GHCR as `ghcr.io/kevredlabs/kevred-app` with the tags above.
 
 Authentication to GHCR uses the built-in `GITHUB_TOKEN` — no secrets to configure.

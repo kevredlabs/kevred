@@ -31,7 +31,7 @@ Client app
 
 **Dashboard**
 ```
-User → dashboard.kevred.io
+User → app.kevred.com
     ├── add/remove RPC providers + API keys (stored in KV)
     ├── view per-provider metrics (request count, error rate, latency)
     └── manage subscription (Stripe)
@@ -81,21 +81,36 @@ Out of scope for v1:
 - **Validator integration**: Kevredlabs operates a Solana validator. Route to own validator as primary provider long-term → eliminates dependency on third-party free tiers entirely and any ToS risk.
 - **Stripe**: subscription plans gating number of providers, request volume, circuit breaker config.
 
+## Repository layout
+
+This monorepo contains three deployable services. The Cloudflare Worker (the actual RPC proxy) lives in a sibling repository.
+
+| Path | Service | Stack |
+|---|---|---|
+| [`api/`](api/) | Backend REST API (auth, providers, metrics) | Node.js 24 · Express 5 · MongoDB |
+| [`app/`](app/) | Dashboard (authenticated) | React 19 · Vite 6 · nginx |
+| [`www/`](www/) | Public landing page | React 19 · Vite 6 · nginx |
+
+Each subdirectory has its own `README.md` with setup, env vars, endpoints and CI details.
+
+## Related repository
+
+**[`kevredlabs/cloudflare-rpc`](https://github.com/kevredlabs/cloudflare-rpc)** — the Cloudflare Worker that implements the actual RPC proxy. It reads each customer's ordered provider list from Cloudflare KV (written by `kevred-api`) and forwards requests to the first responding upstream, falling over to the next on `429/5xx`. It also writes one event per request to Cloudflare Analytics Engine (consumed by `kevred-api`'s `/metrics/*` endpoints). The two repositories are tightly coupled by the KV namespace and the Analytics Engine dataset.
+
 ## Development setup
 
 ```bash
-# Worker
-cd cloudflare-rpc
-yarn install
-yarn wrangler dev --env dev
+# Backend API
+cd api && yarn install && yarn dev
 
-# Deploy
-yarn wrangler deploy --env dev
-yarn wrangler deploy --env prod
+# Dashboard
+cd app && yarn install && yarn dev
 
-# Tail production logs
-yarn wrangler tail --env prod
+# Landing
+cd www && yarn install && yarn dev
 ```
+
+For the RPC Worker itself, see [`kevredlabs/cloudflare-rpc`](https://github.com/kevredlabs/cloudflare-rpc).
 
 ## Team
 

@@ -14,7 +14,7 @@ Express / TypeScript REST API. Connects to MongoDB and exposes the backend endpo
 ## Local development
 
 ```bash
-cp .env.example .env   # fill MONGODB_URI, PORT, …
+# Create .env with the variables listed below, then:
 yarn install
 yarn dev               # tsx watch — hot-reload on save
 ```
@@ -119,11 +119,11 @@ In production, the image is pulled and run on a GCP VM via Docker Compose.
 ## CI — build & publish image
 
 **Workflow:** [`.github/workflows/api.yml`](../.github/workflows/api.yml)  
-**Trigger:** push of a tag matching `api-v*.*.*`
+**Trigger:** push of a tag matching `v*.*.*` (the same tag triggers `app` and `www` builds in parallel — see the root [`CLAUDE.md`](../CLAUDE.md)).
 
 ```bash
-git tag api-v1.2.3
-git push origin api-v1.2.3
+git tag v1.2.3
+git push origin v1.2.3
 ```
 
 **Steps:**
@@ -132,6 +132,6 @@ git push origin api-v1.2.3
 2. Builds the Docker image from `./api`.
 3. Pushes to GHCR as `ghcr.io/kevredlabs/kevred-api` with two tags:
    - `latest` — always tracks the most recent publish
-   - the exact tag name (e.g. `api-v1.2.3`)
+   - the version without the `v` prefix (e.g. `1.2.3`)
 
-There is a single environment (no prod/develop split). Authentication to GHCR uses the built-in `GITHUB_TOKEN` — no secrets to configure.
+There is a single environment (no prod/develop split — the same image runs in both). Authentication to GHCR uses the built-in `GITHUB_TOKEN` — no secrets to configure.
