@@ -53,20 +53,23 @@ User → app.kevred.com
 ## V1 scope
 
 In scope:
-- CF Worker: priority-based failover across N providers per client — on 429/5xx, falls through to next provider in-flight
-- Dashboard: BYOK config UI (add providers in priority order, paste API keys) + per-provider metrics (request count, error rate, latency)
+- CF Worker: two routing modes per client:
+  - **sequential** — priority-based failover; every request goes to provider #1, falls through to #2 then #3 on `429/5xx`
+  - **parallel** — fan out to all healthy providers simultaneously and return the first successful response (lowest latency, higher provider cost)
+- CF Worker: circuit breaker per provider — after N consecutive failures the provider is excluded for a cooldown window and probed for recovery
+- Dashboard: BYOK config UI (add providers in priority order, paste API keys, pick routing mode) + per-provider metrics (request count, error rate, latency, status-code distribution, timeseries)
 - Auth: magic link (email OTP via JWT) + subdomain-based client identification for proxy requests
 
 Out of scope for v1:
-- Circuit breaker (N-failure exclusion, recovery probes)
 - Round-robin dispatch (throughput scaling across providers)
+- Dedicated `sendTransaction` path (staked-connection sender, multi-region fan-out, retry until `lastValidBlockHeight`)
 - Stripe integration
 - Google SSO
 - WebSocket subscription load balancing
 
 ## Key architectural decisions
 
-**Priority failover, not round-robin** — every request goes to provider #1; on 429/5xx the Worker falls through to provider #2, then #3, inline without a retry loop. Round-robin (rotating across all providers for throughput) is deferred to V2.
+**Two routing modes, no round-robin** — `sequential` (priority failover) and `parallel` (fan-out, first-success) cover the reliability vs. latency tradeoff. Round-robin (rotating across all providers for throughput) is deferred to V2.
 
 **Stateless Worker, config in KV** — no state in the Worker itself. Customer config (ordered endpoint list) is read from KV on each request. KV eventual consistency is acceptable here because the config changes rarely and a briefly stale read has no correctness impact — worst case a request hits a stale endpoint and falls over to the next.
 
@@ -76,9 +79,8 @@ Out of scope for v1:
 
 ## Long-term roadmap
 
-- **Circuit breaker (V2)**: track consecutive failures per provider; after N strikes exclude the provider for 30s, probe to recover. Requires Durable Objects (KV is eventually consistent — two Workers could read stale state and route to an excluded provider).
-- **Round-robin dispatch (V3)**: rotate across all healthy providers to multiply effective throughput when a single provider's rate limit becomes the bottleneck.
-- **Validator integration**: Kevredlabs operates a Solana validator. Route to own validator as primary provider long-term → eliminates dependency on third-party free tiers entirely and any ToS risk.
+- **Round-robin dispatch**: rotate across all healthy providers to multiply effective throughput when a single provider's rate limit becomes the bottleneck.
+- **Dedicated `sendTransaction` path**: today, sends are forwarded like any other RPC method. A dedicated path would fan out to multiple landing endpoints (staked connections, regional senders) and optionally drive a server-side retry loop until `lastValidBlockHeight`, instead of leaving it client-side.
 - **Stripe**: subscription plans gating number of providers, request volume, circuit breaker config.
 
 ## Repository layout
