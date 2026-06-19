@@ -44,5 +44,6 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             VITE_APP_URL=${{ matrix.env == 'prod' && 'https://app.kevred.com' || 'https://app.develop.kevred.com' }}
+            VITE_RPC_DOMAIN=${{ matrix.env == 'prod' && 'rpc-mainnet.kevred.net' || 'rpc-mainnet.dev.kevred.net' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

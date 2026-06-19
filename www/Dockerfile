@@ -5,6 +5,8 @@ RUN yarn install --frozen-lockfile
 COPY . .
 ARG VITE_APP_URL
 ENV VITE_APP_URL=$VITE_APP_URL
+ARG VITE_RPC_DOMAIN
+ENV VITE_RPC_DOMAIN=$VITE_RPC_DOMAIN
 RUN yarn build
 
 FROM nginx:alpine
