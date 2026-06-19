@@ -97,7 +97,7 @@ Each subdirectory has its own `README.md` with setup, env vars, endpoints and CI
 
 ## Related repository
 
-**[`kevredlabs/cloudflare-rpc`](https://github.com/kevredlabs/cloudflare-rpc)** — the Cloudflare Worker that implements the actual RPC proxy. It reads each customer's ordered provider list from Cloudflare KV (written by `kevred-api`) and forwards requests to the first responding upstream, falling over to the next on `429/5xx`. It also writes one event per request to Cloudflare Analytics Engine (consumed by `kevred-api`'s `/metrics/*` endpoints). The two repositories are tightly coupled by the KV namespace and the Analytics Engine dataset.
+**[`kevredlabs/cloudflare-rpc`](https://github.com/kevredlabs/cloudflare-rpc)** — the Cloudflare Worker that implements the actual RPC proxy. It reads each customer's ordered provider list and routing mode from Cloudflare KV (written by `kevred-api`) and dispatches each request according to that mode: `sequential` falls over to the next provider on `429/5xx`, `parallel` fans out to all providers and returns the first success. A per-provider circuit breaker excludes a provider after N consecutive failures and probes it back to life. Every attempt and end-to-end summary is written to Cloudflare Analytics Engine, which `kevred-api`'s `/metrics/*` endpoints query back. The two repositories are tightly coupled by the KV namespace and the Analytics Engine dataset.
 
 ## Development setup
 
