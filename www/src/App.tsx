@@ -33,7 +33,6 @@ export default function App() {
             <a href="#how">How it works</a>
             <a href="#features">Features</a>
             <a href="#pricing">Pricing</a>
-            <a href="#docs">Docs</a>
             <a href={`${APP_URL}/login`} className="btn">Log in</a>
             <a href={`${APP_URL}/login`} className="btn btn-primary">Get started →</a>
           </div>
@@ -55,7 +54,6 @@ export default function App() {
           </p>
           <div className="hero-cta">
             <a href={`${APP_URL}/login`} className="btn btn-primary">Start free →</a>
-            <a href="#docs" className="btn">Read the docs</a>
           </div>
 
           <div className="endpoint-card">
@@ -246,7 +244,6 @@ export default function App() {
           <p>Paste your provider keys. Get one URL. Ship.</p>
           <div className="hero-cta">
             <a href={`${APP_URL}/login`} className="btn btn-primary">Get started →</a>
-            <a href="#docs" className="btn">Read the docs</a>
           </div>
         </div>
       </section>
@@ -255,7 +252,6 @@ export default function App() {
         <div className="container footer-inner">
           <div>© 2026 Kevredlabs · Built in France</div>
           <div className="footer-links">
-            <a href="#">Docs</a>
             <a href="#">Status</a>
             <a href="https://github.com/kevredlabs/kevred" target="_blank" rel="noopener noreferrer">GitHub</a>
             <a href="#">Privacy</a>
