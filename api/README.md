@@ -68,12 +68,29 @@ Two databases and two Cloudflare KV namespaces are in use — one per environmen
 
 | Method | Path | Auth required | Description |
 |---|---|---|---|
-| `POST` | `/auth/magic-link` | No | Send a magic link to the given email (rate limited: 5 req / 15 min) |
-| `GET` | `/auth/verify?token=xxx` | No | Validate the magic link token, set JWT cookie (rate limited: 20 req / 15 min) |
+| `POST` | `/auth/magic-link` | No | Send a magic link to the given email — **rejects with 403 if the email is not in the `users` collection** (rate limited: 20 req / 10 min) |
+| `GET` | `/auth/verify?token=xxx` | No | Validate the magic link token, set JWT cookie — rejects with 403 if the user no longer exists (rate limited: 20 req / 15 min) |
 | `POST` | `/auth/logout` | No | Clear the JWT cookie |
 | `GET` | `/auth/me` | Yes | Return the current user (`email`, `customerId`) |
 
 The JWT is stored in an `HttpOnly; Secure; SameSite=Strict` cookie named `token`. Clients must send requests with `credentials: "include"`.
+
+#### Adding a user (invite-only)
+
+Access is invite-only — users must be inserted manually into the `users` collection before they can sign in. Open MongoDB Compass (or any `mongosh` shell), connect to the target database, then run:
+
+```js
+db.users.insertOne({
+  email: "user@example.com",
+  customerId: Array.from({length: 16}, () => Math.floor(Math.random() * 16).toString(16)).join(''),
+  providers: [],
+  mode: "sequential",
+  createdAt: new Date(),
+  updatedAt: new Date()
+})
+```
+
+`email` must be lowercase. `customerId` must be unique across users — the snippet above generates a 16-char hex string inline. Once inserted, the user can request a magic link from the login page.
 
 ### Providers
 
