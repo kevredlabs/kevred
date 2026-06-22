@@ -10,6 +10,7 @@ import HomePage from "./pages/HomePage";
 import LoadBalancerPage from "./pages/LoadBalancerPage";
 import RpcEndpointsPage from "./pages/RpcEndpointsPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
+import DocsPage from "./pages/DocsPage";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -30,6 +31,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/load-balancer" element={<LoadBalancerPage />} />
             <Route path="/rpc-endpoints" element={<RpcEndpointsPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
+            <Route path="/docs" element={<DocsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

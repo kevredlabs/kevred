@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { Home, Scale, Server, BarChart3, LogOut } from "lucide-react";
+import { Home, Scale, Server, BarChart3, BookOpen, LogOut } from "lucide-react";
 import { useAuth } from "../auth";
 import "../dashboard.css";
 
@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { to: "/load-balancer", label: "Load Balancer", Icon: Scale },
   { to: "/rpc-endpoints", label: "RPC Endpoints", Icon: Server },
   { to: "/analytics", label: "Analytics", Icon: BarChart3 },
+  { to: "/docs", label: "Docs", Icon: BookOpen },
 ];
 
 export default function DashboardLayout() {
