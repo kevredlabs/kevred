@@ -11,8 +11,8 @@ import { requireAuth, AuthRequest } from "../middleware/auth";
 const router = Router();
 
 const magicLinkLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
+  windowMs: 10 * 60 * 1000,
+  max: 20,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many requests, please try again later." },
@@ -42,6 +42,13 @@ router.post("/auth/magic-link", magicLinkLimiter, async (req: Request, res: Resp
   }
 
   const normalizedEmail = email.toLowerCase().trim();
+
+  const existingUser = await User.findOne({ email: normalizedEmail });
+  if (!existingUser) {
+    res.status(403).json({ error: "Access is invite-only", code: "ACCESS_DENIED" });
+    return;
+  }
+
   const token = generateToken();
   const tokenHash = hashToken(token);
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
@@ -78,10 +85,12 @@ router.get("/auth/verify", verifyLimiter, async (req: Request, res: Response) =>
   // Single-use : suppression immédiate avant d'émettre le JWT
   await MagicToken.deleteOne({ _id: magicToken._id });
 
-  let user = await User.findOne({ email: magicToken.email });
+  const user = await User.findOne({ email: magicToken.email });
   if (!user) {
-    user = await User.create({ email: magicToken.email, customerId: generateCustomerId() });
-  } else if (!user.customerId) {
+    res.status(403).json({ error: "Access is invite-only", code: "ACCESS_DENIED" });
+    return;
+  }
+  if (!user.customerId) {
     user.customerId = generateCustomerId();
     await user.save();
   }

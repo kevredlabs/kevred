@@ -67,8 +67,12 @@ export default function LoginPage() {
 
             {status === "error" && <p className="error-msg">{error}</p>}
 
-            <p className="info">
-              New here? The same link creates your account on first sign-in.
+            <p className="invite-notice">
+              Access is <strong>invite-only</strong>. Request access on{" "}
+              <a href="https://t.me/kevredlabs" target="_blank" rel="noopener noreferrer" className="tg-link">
+                Telegram @kevredlabs
+              </a>
+              .
             </p>
 
             <p className="legal">
